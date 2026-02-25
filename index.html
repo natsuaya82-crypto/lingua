@@ -1134,7 +1134,6 @@ body>*{position:relative;z-index:1}
       <button class="btn btn-primary btn-sm" onclick="goTo('login')" data-i18n="btn_start">無料で始める</button>
     </div>
     <div id="topbar-user-area" style="display:flex;align-items:center;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="openContactForm()" data-i18n="btn_contact" style="font-size:0.78rem">💬 お問い合わせ</button>
       <span id="topbar-plan-badge"></span>
       <div class="avatar" id="topbar-avatar" onclick="logout()" data-i18n-title="btn_logout" title="ログアウト" style="cursor:pointer">✦</div>
     </div>
@@ -1147,17 +1146,14 @@ body>*{position:relative;z-index:1}
     <button class="bnav-btn active" id="bnav-dash" onclick="goTo('dashboard');setBNav('bnav-dash')">
       <div class="bnav-icon-wrap">🏠</div><span class="bnav-label" data-i18n="bnav_home">ホーム</span>
     </button>
-    <button class="bnav-btn" id="bnav-phoneme" onclick="openEditor('phoneme');setBNav('bnav-phoneme')">
-      <div class="bnav-icon-wrap">🔊</div><span class="bnav-label" data-i18n="bnav_phoneme">音韻</span>
+    <button class="bnav-btn" id="bnav-daily" onclick="openEditor('daily');setBNav('bnav-daily')">
+      <div class="bnav-icon-wrap">✦</div><span class="bnav-label" data-i18n="bnav_memo">メモ</span>
     </button>
     <button class="bnav-btn" id="bnav-vocab" onclick="goTo('vocab');setBNav('bnav-vocab')">
       <div class="bnav-icon-wrap">📖</div><span class="bnav-label" data-i18n="bnav_vocab">語彙</span>
     </button>
-    <button class="bnav-btn" id="bnav-grammar" onclick="openEditor('grammar');setBNav('bnav-grammar')">
-      <div class="bnav-icon-wrap">⚙️</div><span class="bnav-label" data-i18n="bnav_grammar">文法</span>
-    </button>
-    <button class="bnav-btn" id="bnav-more" onclick="toggleMobileMore();setBNav('bnav-more')">
-      <div class="bnav-icon-wrap">•••</div><span class="bnav-label" data-i18n="bnav_more">その他</span>
+    <button class="bnav-btn" id="bnav-aichat" onclick="goTo('aichat');setBNav('bnav-aichat')">
+      <div class="bnav-icon-wrap">🤖</div><span class="bnav-label" data-i18n="bnav_aichat">AI会話</span>
     </button>
   </div>
 </nav>
@@ -1812,43 +1808,108 @@ body>*{position:relative;z-index:1}
 </div>
 
 <!-- CONTACT FORM POPUP -->
-<div id="contact-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeContactForm()">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;max-width:500px;width:100%;padding:28px;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
-    <div style="font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;margin-bottom:6px;background:linear-gradient(135deg,var(--text-primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent" data-i18n="contact_title">💬 お問い合わせ</div>
-    <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px" data-i18n="contact_subtitle">ご意見・ご要望・バグ報告をお待ちしております</div>
-    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:20px">
-      <span data-i18n="contact_email_label">または直接メールで：</span> 
-      <a href="mailto:support@lingualang.com" style="color:var(--accent);text-decoration:none">support@lingualang.com</a>
-    </div>
+<!-- CONTACT PAGE -->
+<div class="page" id="page-contact">
+  <div style="max-width:700px;margin:0 auto;padding:24px 20px calc(var(--bottom-nav-h) + 24px)">
     
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:0.78rem;color:var(--text-secondary);margin-bottom:6px" data-i18n="contact_category">カテゴリー</label>
-      <select id="contact-category" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit">
-        <option value="bug" data-i18n="contact_cat_bug">🐛 バグ報告</option>
-        <option value="feature" data-i18n="contact_cat_feature">✨ 機能リクエスト</option>
-        <option value="feedback" data-i18n="contact_cat_feedback">💭 フィードバック</option>
-        <option value="other" data-i18n="contact_cat_other">その他</option>
-      </select>
+    <!-- 戻るボタン -->
+    <div style="margin-bottom:16px">
+      <button onclick="goTo('dashboard');setNav('nav-dash');setBNav('bnav-dash')" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--text-secondary);font-family:inherit;font-size:0.82rem;cursor:pointer;padding:4px 0;transition:color 0.15s" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">
+        <span>← ホームに戻る</span>
+      </button>
     </div>
-    
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:0.78rem;color:var(--text-secondary);margin-bottom:6px" data-i18n="contact_email">メールアドレス（任意）</label>
-      <input type="email" id="contact-email" placeholder="your@email.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit">
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px">
+      <div style="font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;margin-bottom:8px;background:linear-gradient(135deg,var(--text-primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">💬 お問い合わせ</div>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:20px">ご意見・ご要望・バグ報告をお待ちしております</div>
+      
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px">カテゴリー</label>
+        <select id="contact-category" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;font-size:0.88rem">
+          <option value="bug">🐛 バグ報告</option>
+          <option value="feature">✨ 機能リクエスト</option>
+          <option value="feedback">💭 フィードバック</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px">メールアドレス（任意）</label>
+        <input type="email" id="contact-email" placeholder="your@email.com" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;font-size:0.88rem">
+      </div>
+      
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px">メッセージ</label>
+        <textarea id="contact-message" placeholder="お気軽にお書きください..." rows="8" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;resize:vertical;font-size:0.88rem;line-height:1.6"></textarea>
+      </div>
+      
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:16px">
+        または直接メールで：<a href="mailto:support@lingualang.com" style="color:var(--accent);text-decoration:none">support@lingualang.com</a>
+      </div>
+      
+      <button class="btn btn-primary" onclick="submitContactForm()" style="width:100%">送信</button>
     </div>
-    
-    <div style="margin-bottom:20px">
-      <label style="display:block;font-size:0.78rem;color:var(--text-secondary);margin-bottom:6px" data-i18n="contact_message">メッセージ</label>
-      <textarea id="contact-message" placeholder="" data-i18n-placeholder="contact_message_placeholder" rows="6" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;resize:vertical"></textarea>
-    </div>
-    
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn" onclick="closeContactForm()" data-i18n="btn_cancel">キャンセル</button>
-      <button class="btn btn-primary" onclick="submitContactForm()" data-i18n="btn_send_contact">送信</button>
+
+    <!-- 特定商取引法に基づく表記 -->
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:24px">
+      <div style="font-size:0.95rem;font-weight:600;color:var(--text-primary);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">特定商取引法に基づく表記</div>
+      
+      <div style="display:grid;gap:14px;font-size:0.82rem">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">事業者名</div>
+          <div style="color:var(--text-primary)">伊平翔</div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">所在地</div>
+          <div style="color:var(--text-primary);line-height:1.7">
+            〒160-0022<br>
+            東京都新宿区新宿1-36-2<br>
+            新宿第七葉山ビル 3F
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">お問い合わせ</div>
+          <div style="color:var(--text-primary)">
+            <a href="mailto:support@lingualang.com" style="color:var(--accent);text-decoration:none">support@lingualang.com</a>
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">販売価格</div>
+          <div style="color:var(--text-primary)">
+            Lite: $9.99/月<br>
+            Premium: $19.99/月<br>
+            ※表示価格は税込です
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">支払方法</div>
+          <div style="color:var(--text-primary)">クレジットカード（Stripe決済）</div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">支払時期</div>
+          <div style="color:var(--text-primary)">お申し込み時に決済</div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">サービス提供時期</div>
+          <div style="color:var(--text-primary)">決済完了後、即時</div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
+          <div style="color:var(--text-muted)">返品・キャンセル</div>
+          <div style="color:var(--text-primary)">サブスクリプションはいつでも解約可能です。解約後は次回更新日以降、有料機能が利用不可となります。</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- IMPORT JSON POPUP -->
+<!-- IMPORT JSON POPUP (kept as popup) -->
 <div id="import-popup" style="display:none" class="vis-popup" onclick="if(event.target===this)closeImportPopup()">
   <div class="vis-popup-box" style="max-width:440px">
     <div class="vis-popup-title" data-i18n="import_title">📥 言語データをインポート</div>
@@ -2686,13 +2747,16 @@ function saveState() {
     const snap = JSON.stringify(S);
     // Size check
     const bytes = new Blob([snap]).size;
+    console.log('💾 Saving state:', (bytes/1024).toFixed(1) + 'KB');
     if (bytes > STORAGE_WARN_BYTES) {
       showAutosave(`${t('storage_warn')} (${(bytes/1024).toFixed(0)}KB)`);
     }
     localStorage.setItem(SAVE_KEY, snap);
     _lastSaved = Date.now();
+    console.log('✅ State saved successfully');
     if (bytes <= STORAGE_WARN_BYTES) showAutosave(t('storage_ok'));
   } catch(e) {
+    console.error('❌ Save failed:', e);
     if (e.name === 'QuotaExceededError') {
       showAutosave(t('storage_full'));
     } else {
@@ -2752,6 +2816,7 @@ function wrapStateProxy() {
 
 // ==== NAV ====
 function goTo(id){
+  window.scrollTo(0, 0); // Always scroll to top when changing pages
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const page=document.getElementById('page-'+id);
   if(page)page.classList.add('active');
@@ -2762,6 +2827,12 @@ function goTo(id){
     setNav('nav-aichat');
     const nameEl=document.getElementById('aichat-lang-name');
     if(nameEl)nameEl.textContent=S.langName||'—';
+  }
+  if(id==='contact'){
+    setNav('');
+    // Pre-fill email if logged in
+    const emailField = document.getElementById('contact-email');
+    if(emailField && _authUser?.email) emailField.value = _authUser.email;
   }
   // Show/hide vis indicator
   const visInd=document.getElementById('vis-indicator');
@@ -2795,6 +2866,9 @@ function setupBack(n){}
 function selectScript(el,key){document.querySelectorAll('.script-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');S.script=key;scheduleSave()}
 function selectRoute(el,key){S.route=key;if(key==='image'){enterDashboard();openEditor('vibe')}else enterDashboard()}
 function enterDashboard(){
+  // スクロール位置をトップに強制
+  window.scrollTo(0, 0);
+  
   document.getElementById('topbar-nav').style.display='flex';
   document.getElementById('topbar-user-area').style.display='flex';
   document.getElementById('topbar-login-btns').style.display='none';
@@ -2804,6 +2878,8 @@ function enterDashboard(){
   const visInd=document.getElementById('vis-indicator');
   if(visInd)visInd.style.display='flex';
   updateVisIndicator();
+  
+  // 確実にダッシュボードページに移動
   goTo('dashboard');
   setNav('nav-dash');
   setBNav('bnav-dash');
@@ -3077,6 +3153,20 @@ function buildScript(){
   </div>`
 }
 function livePreview(){const src=document.getElementById('preview-source'),tgt=document.getElementById('preview-target');if(!src||!tgt)return;const map={};'abcdefghijklmnopqrstuvwxyz'.split('').forEach(c=>{const el=document.getElementById('sm-'+c);if(el&&el.value)map[c]=el.value});const result=src.value.toLowerCase().split('').map(c=>map[c]||c).join('');tgt.textContent=result||'…'}
+function scriptCellFocus(el){
+  const char = el.id.replace('sm-','');
+  const info = document.getElementById('script-active-cell-info');
+  if(info) {
+    info.textContent = `✓ 選択中: "${char.toUpperCase()}" → 文字を入力またはピッカーから選択`;
+    info.style.fontWeight = '600';
+  }
+  window._activeScriptCell = el;
+}
+function scriptCharFocus(){
+  // Triggered when char picker target receives focus
+  const info = document.getElementById('script-active-cell-info');
+  if(info) info.textContent = '文字ピッカーを使用する場合は、まず上のマッピング欄のセルをクリックしてください';
+}
 function applyPreset(key){const alpha='abcdefghijklmnopqrstuvwxyz'.split('');const presets={rune:['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᛃ','ᛇ','ᛚ','ᛗ','ᚾ','ᛟ','ᛈ','ᛩ','ᚱ','ᛊ','ᛏ','ᚢ','ᚢ','ᚹ','ᚷ','ᛃ','ᛉ'],latin:alpha,greek:['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω','ᾳ','ζ']};if(!presets[key])return;presets[key].forEach((c,i)=>{const el=document.getElementById('sm-'+alpha[i]);if(el)el.value=c});livePreview()}
 function clearScriptMap(){'abcdefghijklmnopqrstuvwxyz'.split('').forEach(c=>{const el=document.getElementById('sm-'+c);if(el)el.value=''});livePreview()}
 function saveScriptMap(){const alpha='abcdefghijklmnopqrstuvwxyz'.split('');alpha.forEach(c=>{const el=document.getElementById('sm-'+c);if(el&&el.value)S.scriptMap[c]=el.value;else delete S.scriptMap[c]});S.done.script=Object.keys(S.scriptMap).length>0;scheduleSave()}
@@ -5507,12 +5597,14 @@ function initAuth(){
 
         // リダイレクト処理が済んでいない場合のみ遷移
         if(!_redirectHandled){
-          // ログイン画面にいる場合だけダッシュボードへ
-          const loginPage = document.getElementById('page-login');
-          if(loginPage && loginPage.classList.contains('active')){
-            console.log('🚀 Entering dashboard after login');
-            enterDashboard();
-          }
+          // ログイン画面にいる場合だけダッシュボードへ（タイミング調整）
+          setTimeout(() => {
+            const loginPage = document.getElementById('page-login');
+            if(loginPage && loginPage.classList.contains('active')){
+              console.log('🚀 Entering dashboard after login');
+              enterDashboard();
+            }
+          }, 300);
         }
       } else {
         // ログアウト状態
@@ -5551,8 +5643,11 @@ function initAuth(){
             updateAuthUI();
             showAutosave(t('w_google_login') + ' ✓');
             
-            console.log('🚀 Entering dashboard after redirect');
-            enterDashboard();
+            // タイミング調整してダッシュボードへ確実に遷移
+            setTimeout(() => {
+              console.log('🚀 Entering dashboard after redirect');
+              enterDashboard();
+            }, 400);
           }
         })
         .catch((error) => {
@@ -6319,21 +6414,18 @@ function updateVisIndicator(){
 
 // ===== CONTACT FORM =====
 function openContactForm(){
-  const popup=document.getElementById('contact-popup');
-  if(popup){
-    popup.style.display='flex';
-    document.body.style.overflow='hidden';
-    document.getElementById('contact-category').value='bug';
-    document.getElementById('contact-email').value=_authUser?.email||'';
-    document.getElementById('contact-message').value='';
-  }
+  // Now using page instead of popup
+  goTo('contact');
+  setNav('');
+  setBNav('bnav-contact');
+  // Pre-fill email if logged in
+  const emailField = document.getElementById('contact-email');
+  if(emailField && _authUser?.email) emailField.value = _authUser.email;
 }
 function closeContactForm(){
-  const popup=document.getElementById('contact-popup');
-  if(popup){
-    popup.style.display='none';
-    document.body.style.overflow='';
-  }
+  // No longer needed with page-based approach, but kept for compatibility
+  goTo('dashboard');
+  setBNav('bnav-dash');
 }
 async function submitContactForm(){
   const category=document.getElementById('contact-category').value;
@@ -6341,7 +6433,7 @@ async function submitContactForm(){
   const message=document.getElementById('contact-message').value.trim();
   
   if(!message){
-    alert(t('contact_error_empty')||'メッセージを入力してください');
+    alert('メッセージを入力してください');
     return;
   }
   
@@ -6355,16 +6447,21 @@ async function submitContactForm(){
     if(window.firebaseDb && window.firestoreCollection && window.firestoreAddDoc){
       const colRef=window.firestoreCollection(window.firebaseDb,'contact_submissions');
       await window.firestoreAddDoc(colRef,data);
-      alert(t('contact_success')||'お問い合わせを送信しました。ありがとうございます！');
-      closeContactForm();
+      alert('お問い合わせを送信しました。ありがとうございます！');
+      // Clear form
+      document.getElementById('contact-message').value='';
+      goTo('dashboard');
+      setBNav('bnav-dash');
     }else{
       console.log('📮 Contact Form:',data);
-      alert(t('contact_success')||'お問い合わせを送信しました。ありがとうございます！');
-      closeContactForm();
+      alert('お問い合わせを送信しました。ありがとうございます！');
+      document.getElementById('contact-message').value='';
+      goTo('dashboard');
+      setBNav('bnav-dash');
     }
   }catch(error){
     console.error('Contact form error:',error);
-    alert(t('contact_error')||'送信に失敗しました。もう一度お試しください。');
+    alert('送信に失敗しました。もう一度お試しください。');
   }
 }
 
@@ -7966,7 +8063,7 @@ function openCustomerPortal() {
       あなただけの言語を創造し、学び、共有するプラットフォーム
     </div>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
-      <a href="#" onclick="showLegalModal('tokusho');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
+      <a href="#" onclick="goTo('contact');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
         特定商取引法に基づく表記
       </a>
       <a href="#" onclick="showLegalModal('terms');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
@@ -7975,8 +8072,8 @@ function openCustomerPortal() {
       <a href="#" onclick="showLegalModal('privacy');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
         プライバシーポリシー
       </a>
-      <a href="mailto:support@lingua-app.com" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;">
-        お問い合わせ
+      <a href="#" onclick="goTo('contact');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
+        💬 お問い合わせ
       </a>
     </div>
     <div style="font-size:0.68rem;color:var(--text-muted);">
