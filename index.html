@@ -1866,7 +1866,7 @@ body>*{position:relative;z-index:1}
 </div>
 
 <!-- MEMO PAGE -->
-<div id="page-memo" style="display:none" class="page-section">
+<div id="page-memo" class="page" style="display:none">
   <div class="topbar-spacer"></div>
   <div class="container">
     <div style="max-width:900px;margin:0 auto;padding-bottom:calc(var(--bottom-nav-h) + 20px)">
@@ -2758,6 +2758,20 @@ function wStart(skip = false) {
   const name = skip ? '' : (nameEl?.value.trim() || '');
   S.langName = name || t('w_unnamed');
   S.vibe = [..._wSelectedVibes];
+  
+  // ゲストユーザーとして認証状態を保存
+  if(!_authUser){
+    _authUser = {
+      uid: 'guest_' + Date.now(),
+      name: 'Guest',
+      email: '',
+      photo: ''
+    };
+    try {
+      localStorage.setItem(AUTH_KEY, JSON.stringify(_authUser));
+    } catch(e){}
+  }
+  
   enterDashboard();
 }
 function wRestore() {
@@ -5699,6 +5713,14 @@ function initAuth(){
   }
   
   updateAuthUI();
+  
+  // ページロード時に既にログインしている場合、ダッシュボードに遷移
+  if(_authUser && _authUser.uid){
+    console.log('✅ User already logged in, entering dashboard');
+    setTimeout(() => {
+      enterDashboard();
+    }, 100);
+  }
 }
 
 // --- Google ログイン（signInWithRedirect: スマホ・PC両対応） ---
@@ -7940,7 +7962,7 @@ const LEGAL_CONTENT = {
       <div style="margin-bottom:24px;">
         <h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">販売業者</h3>
         <p>Lingua運営事務局<br>
-        メールアドレス: support@lingua-app.com</p>
+        メールアドレス: Lingua@tokinets.com</p>
       </div>
 
       <div style="margin-bottom:24px;">
@@ -7962,7 +7984,7 @@ const LEGAL_CONTENT = {
         <h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">返品・キャンセル・解約</h3>
         <p>・デジタルサービスの性質上、返金は原則として承っておりません<br>
         ・解約はいつでも可能です。解約後も当月末まで利用可能です<br>
-        ・解約方法: support@lingua-app.com までご連絡ください</p>
+        ・解約方法: Lingua@tokinets.com までご連絡ください</p>
       </div>
     `
   },
@@ -8017,7 +8039,7 @@ const LEGAL_CONTENT = {
       <div style="margin-bottom:24px;">
         <h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;">3. お問い合わせ</h3>
         <p>プライバシーに関するお問い合わせ：<br>
-        support@lingua-app.com</p>
+        Lingua@tokinets.com</p>
       </div>
     `
   }
@@ -8064,9 +8086,9 @@ function openCustomerPortal() {
           以下のメールアドレスまでお問い合わせください：
         </p>
         <div style="background:var(--surface-2);padding:16px;border-radius:10px;text-align:center;margin-bottom:16px;">
-          <a href="mailto:support@lingua-app.com?subject=サブスクリプション管理について" 
+          <a href="mailto:Lingua@tokinets.com?subject=サブスクリプション管理について" 
              style="color:var(--accent);font-weight:700;text-decoration:none;font-size:1.05rem;">
-            support@lingua-app.com
+            Lingua@tokinets.com
           </a>
         </div>
         <p style="font-size:0.8rem;color:var(--text-muted);">
@@ -8086,8 +8108,8 @@ function openCustomerPortal() {
 </script>
 
 <!-- 法的表記モーダル -->
-<div id="legal-modal" class="editor-overlay" style="display:none;" onclick="if(event.target===this)closeLegalModal()">
-  <div class="editor-panel" style="max-width:800px;max-height:90dvh;overflow-y:auto;" onclick="event.stopPropagation()">
+<div id="legal-modal" class="editor-overlay" style="display:none;z-index:1000;" onclick="if(event.target===this)closeLegalModal()">
+  <div class="editor-panel" style="max-width:800px;max-height:90dvh;overflow-y:auto;padding:24px;" onclick="event.stopPropagation()">
     <div class="editor-handle"></div>
     <div class="editor-header">
       <div>
@@ -8095,7 +8117,7 @@ function openCustomerPortal() {
       </div>
       <button class="editor-close" onclick="closeLegalModal()">×</button>
     </div>
-    <div id="legal-modal-content" style="padding:0 4px;font-size:0.85rem;line-height:1.9;color:var(--text-secondary);">
+    <div id="legal-modal-content" style="padding:24px;font-size:0.85rem;line-height:1.9;color:var(--text-secondary);">
       <!-- コンテンツは動的に挿入 -->
     </div>
   </div>
