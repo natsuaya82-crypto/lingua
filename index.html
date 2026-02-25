@@ -60,7 +60,7 @@
     --vh-full: 100dvh;
   }
 }
-body{background:var(--bg);color:var(--text-primary);font-family:'Crimson Pro','Noto Sans JP',serif;min-height:var(--vh-full);-webkit-font-smoothing:antialiased;font-size:15px;background-image:var(--nebula);background-attachment:fixed}
+body{background:var(--bg);color:var(--text-primary);font-family:'Crimson Pro','Noto Sans JP',serif;min-height:var(--vh-full);-webkit-font-smoothing:antialiased;font-size:15px;background-image:var(--nebula);background-attachment:fixed;overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}
 body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,0.3) 0%,transparent 100%),radial-gradient(1px 1px at 30% 60%,rgba(255,255,255,0.2) 0%,transparent 100%),radial-gradient(1px 1px at 60% 10%,rgba(255,255,255,0.25) 0%,transparent 100%),radial-gradient(1px 1px at 80% 45%,rgba(255,255,255,0.2) 0%,transparent 100%),radial-gradient(1px 1px at 90% 80%,rgba(255,255,255,0.15) 0%,transparent 100%),radial-gradient(1px 1px at 50% 90%,rgba(255,255,255,0.2) 0%,transparent 100%),radial-gradient(1px 1px at 20% 85%,rgba(255,255,255,0.15) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 70% 70%,rgba(140,126,255,0.35) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 15% 50%,rgba(192,123,255,0.25) 0%,transparent 100%);pointer-events:none;z-index:0}
 body>*{position:relative;z-index:1}
 
@@ -77,14 +77,14 @@ body>*{position:relative;z-index:1}
 .topbar-navbtn.active{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border)}
 
 /* BOTTOM NAV (mobile) */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:rgba(10,10,14,0.95);backdrop-filter:blur(20px) saturate(1.5);border-top:1px solid var(--border);z-index:200;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:rgba(10,10,14,0.98);backdrop-filter:blur(20px) saturate(1.5);border-top:1px solid var(--border);z-index:200;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px);-webkit-tap-highlight-color:transparent}
 .bottom-nav-inner{display:flex;align-items:center;height:100%;gap:2px}
-.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;border:none;background:transparent;cursor:pointer;border-radius:10px;transition:all 0.18s;color:var(--text-muted);position:relative}
-.bnav-btn:active{transform:scale(0.92)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:none;background:transparent;cursor:pointer;border-radius:10px;transition:all 0.18s;color:var(--text-muted);position:relative;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.bnav-btn:active{transform:scale(0.94)}
 .bnav-btn.active{color:var(--accent)}
 .bnav-btn.active .bnav-icon-wrap{background:var(--accent-dim);border-color:var(--accent-border)}
-.bnav-icon-wrap{width:38px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid transparent;transition:all 0.18s;font-size:1rem}
-.bnav-label{font-family:'Noto Sans JP',sans-serif;font-size:0.55rem;font-weight:500;letter-spacing:0.03em;transition:color 0.18s;white-space:nowrap}
+.bnav-icon-wrap{width:40px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid transparent;transition:all 0.18s;font-size:1.1rem}
+.bnav-label{font-family:'Noto Sans JP',sans-serif;font-size:0.58rem;font-weight:500;letter-spacing:0.03em;transition:color 0.18s;white-space:nowrap}
 
 /* BUTTONS */
 .btn{font-family:inherit;font-size:0.83rem;font-weight:500;padding:7px 16px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
@@ -100,7 +100,7 @@ body>*{position:relative;z-index:1}
 
 /* PAGES */
 .page{display:none}
-.page.active{display:block;animation:fadeIn 0.25s ease both}
+.page.active{display:block}
 #page-login.active{display:flex;min-height:calc(100dvh - 54px);align-items:center;justify-content:center;padding:40px 24px}
 
 /* LOGIN */
@@ -1051,6 +1051,17 @@ body>*{position:relative;z-index:1}
 .lang-menu-btn{display:block;width:100%;padding:8px 12px;border:none;background:transparent;color:var(--text-secondary);font-size:0.82rem;font-family:inherit;cursor:pointer;border-radius:8px;text-align:left;transition:background 0.1s}
 .lang-menu-btn:hover{background:var(--accent-dim);color:var(--accent)}
 .lang-menu-btn.active{color:var(--accent);font-weight:700}
+
+/* Memo card styles */
+.memo-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all 0.15s;position:relative}
+.memo-card:hover{background:var(--surface-hover);border-color:var(--border-hover);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.memo-card-title{font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.memo-card-preview{font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.memo-card-footer{display:flex;align-items:center;justify-content:space-between;font-size:0.72rem;color:var(--text-muted)}
+.memo-card-date{display:flex;align-items:center;gap:5px}
+
+@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes fadeOut{to{opacity:0}}
 </style>
 <!-- Firebase SDK -->
 <script type="module">
@@ -1141,13 +1152,13 @@ body>*{position:relative;z-index:1}
 </div>
 
 <!-- BOTTOM NAV (mobile) — 5 thumb-friendly tabs -->
-<nav class="bottom-nav" id="bottom-nav">
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
   <div class="bottom-nav-inner">
     <button class="bnav-btn active" id="bnav-dash" onclick="goTo('dashboard');setBNav('bnav-dash')">
       <div class="bnav-icon-wrap">🏠</div><span class="bnav-label" data-i18n="bnav_home">ホーム</span>
     </button>
-    <button class="bnav-btn" id="bnav-daily" onclick="openEditor('daily');setBNav('bnav-daily')">
-      <div class="bnav-icon-wrap">✦</div><span class="bnav-label" data-i18n="bnav_memo">メモ</span>
+    <button class="bnav-btn" id="bnav-memo" onclick="goTo('memo');setBNav('bnav-memo')">
+      <div class="bnav-icon-wrap">📝</div><span class="bnav-label" data-i18n="bnav_memo">メモ</span>
     </button>
     <button class="bnav-btn" id="bnav-vocab" onclick="goTo('vocab');setBNav('bnav-vocab')">
       <div class="bnav-icon-wrap">📖</div><span class="bnav-label" data-i18n="bnav_vocab">語彙</span>
@@ -1759,7 +1770,7 @@ body>*{position:relative;z-index:1}
         <div class="faq-question" data-i18n="faq_q9">バグを見つけた場合は？</div>
         <div class="faq-answer">
           <span data-i18n="faq_a9">画面右上の「💬 お問い合わせ」からご報告ください。または直接</span> 
-          <a href="mailto:support@lingualang.com" style="color:var(--accent)">support@lingualang.com</a> 
+          <a href="/cdn-cgi/l/email-protection#1764626767786563577b7e797062767b7679703974787a" style="color:var(--accent)"><span class="__cf_email__" data-cfemail="83f0f6f3f3ecf1f7c3efeaede4f6e2efe2ede4ade0ecee">[email&#160;protected]</span></a> 
           <span data-i18n="faq_a9_2">までメールをお送りください。</span>
         </div>
       </div>
@@ -1829,6 +1840,7 @@ body>*{position:relative;z-index:1}
           <option value="bug">🐛 バグ報告</option>
           <option value="feature">✨ 機能リクエスト</option>
           <option value="feedback">💭 フィードバック</option>
+          <option value="support">🙋 サポート</option>
           <option value="other">その他</option>
         </select>
       </div>
@@ -1844,66 +1856,56 @@ body>*{position:relative;z-index:1}
       </div>
       
       <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:16px">
-        または直接メールで：<a href="mailto:support@lingualang.com" style="color:var(--accent);text-decoration:none">support@lingualang.com</a>
+        または直接メールで：<a href="/cdn-cgi/l/email-protection#fb888e8b8b94898fbb9792959c8e9a979a959cd5989496" style="color:var(--accent);text-decoration:none"><span class="__cf_email__" data-cfemail="87f4f2f7f7e8f5f3c7ebeee9e0f2e6ebe6e9e0a9e4e8ea">[email&#160;protected]</span></a>
       </div>
       
       <button class="btn btn-primary" onclick="submitContactForm()" style="width:100%">送信</button>
     </div>
 
-    <!-- 特定商取引法に基づく表記 -->
-    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:24px">
-      <div style="font-size:0.95rem;font-weight:600;color:var(--text-primary);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">特定商取引法に基づく表記</div>
+  </div>
+</div>
+
+<!-- MEMO PAGE -->
+<div id="page-memo" style="display:none" class="page-section">
+  <div class="topbar-spacer"></div>
+  <div class="container">
+    <div style="max-width:900px;margin:0 auto;padding-bottom:calc(var(--bottom-nav-h) + 20px)">
       
-      <div style="display:grid;gap:14px;font-size:0.82rem">
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">事業者名</div>
-          <div style="color:var(--text-primary)">伊平翔</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">所在地</div>
-          <div style="color:var(--text-primary);line-height:1.7">
-            〒160-0022<br>
-            東京都新宿区新宿1-36-2<br>
-            新宿第七葉山ビル 3F
+      <!-- ヘッダー -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:1.6rem;font-weight:700;margin-bottom:6px;background:linear-gradient(135deg,var(--text-primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+            📝 メモ
+          </div>
+          <div style="font-size:0.82rem;color:var(--text-secondary)">
+            アイデアやメモを自由に記録
           </div>
         </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">お問い合わせ</div>
-          <div style="color:var(--text-primary)">
-            <a href="mailto:support@lingualang.com" style="color:var(--accent);text-decoration:none">support@lingualang.com</a>
-          </div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">販売価格</div>
-          <div style="color:var(--text-primary)">
-            Lite: $9.99/月<br>
-            Premium: $19.99/月<br>
-            ※表示価格は税込です
-          </div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">支払方法</div>
-          <div style="color:var(--text-primary)">クレジットカード（Stripe決済）</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">支払時期</div>
-          <div style="color:var(--text-primary)">お申し込み時に決済</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">サービス提供時期</div>
-          <div style="color:var(--text-primary)">決済完了後、即時</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px">
-          <div style="color:var(--text-muted)">返品・キャンセル</div>
-          <div style="color:var(--text-primary)">サブスクリプションはいつでも解約可能です。解約後は次回更新日以降、有料機能が利用不可となります。</div>
-        </div>
+        <button class="btn btn-primary" onclick="createNewMemo()">
+          ➕ 新規メモ
+        </button>
+      </div>
+
+      <!-- 検索バー -->
+      <div style="margin-bottom:20px">
+        <input type="text" id="memo-search" placeholder="🔍 メモを検索..." 
+          oninput="filterMemos(this.value)"
+          style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;font-size:0.88rem">
+      </div>
+
+      <!-- メモリスト -->
+      <div id="memo-list" style="display:grid;gap:14px">
+        <!-- メモカードが動的に挿入される -->
+      </div>
+
+      <!-- 空の状態 -->
+      <div id="memo-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted)">
+        <div style="font-size:3rem;margin-bottom:16px;opacity:0.3">📝</div>
+        <div style="font-size:0.9rem;margin-bottom:12px">まだメモがありません</div>
+        <div style="font-size:0.8rem;margin-bottom:20px">新しいメモを作成してアイデアを記録しましょう</div>
+        <button class="btn btn-primary" onclick="createNewMemo()">
+          ➕ 最初のメモを作成
+        </button>
       </div>
     </div>
   </div>
@@ -1922,7 +1924,38 @@ body>*{position:relative;z-index:1}
   </div>
 </div>
 
-<script>
+<!-- MEMO EDITOR OVERLAY -->
+<div id="memo-editor-overlay" class="editor-overlay" style="display:none" onclick="if(event.target===this)closeMemoEditor()">
+  <div class="editor-panel" style="max-width:800px;max-height:90dvh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+    <div class="editor-handle"></div>
+    <div class="editor-header">
+      <div style="flex:1">
+        <input type="text" id="memo-editor-title" placeholder="メモのタイトル" 
+          style="background:transparent;border:none;color:var(--text-primary);font-size:1.1rem;font-weight:600;width:100%;outline:none;font-family:inherit">
+      </div>
+      <button class="editor-close" onclick="closeMemoEditor()">×</button>
+    </div>
+    
+    <div style="flex:1;overflow-y:auto;padding:0 4px">
+      <textarea id="memo-editor-content" placeholder="メモの内容を入力..." 
+        style="width:100%;min-height:400px;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text-primary);font-family:inherit;resize:vertical;font-size:0.9rem;line-height:1.8;outline:none"></textarea>
+    </div>
+
+    <div style="padding:16px 4px;display:flex;gap:10px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="closeMemoEditor()">
+        キャンセル
+      </button>
+      <button class="btn" onclick="deleteMemo()" id="memo-delete-btn" style="margin-left:auto;color:var(--rose)">
+        🗑️ 削除
+      </button>
+      <button class="btn btn-primary" onclick="saveMemo()">
+        💾 保存
+      </button>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ===== STATE =====
 const S = {
   langName:'新しい言語', script:'latin', route:'self',
@@ -2834,6 +2867,10 @@ function goTo(id){
     const emailField = document.getElementById('contact-email');
     if(emailField && _authUser?.email) emailField.value = _authUser.email;
   }
+  if(id==='memo'){
+    setNav('');
+    loadMemosFromDB(); // Load memos when entering memo page
+  }
   // Show/hide vis indicator
   const visInd=document.getElementById('vis-indicator');
   if(visInd)visInd.style.display=(id==='dashboard'||id==='library'||id==='aichat'||id==='vocab')?'flex':'none';
@@ -2872,6 +2909,11 @@ function enterDashboard(){
   document.getElementById('topbar-nav').style.display='flex';
   document.getElementById('topbar-user-area').style.display='flex';
   document.getElementById('topbar-login-btns').style.display='none';
+  
+  // ボトムナビを表示
+  const bottomNav = document.getElementById('bottom-nav');
+  if(bottomNav) bottomNav.style.display='block';
+  
   const langCur=document.getElementById('lang-cur');
   const LANG_SHORT_INIT={ja:'JA',en:'EN',zh:'中文',es:'ES'};
   if(langCur)langCur.textContent=LANG_SHORT_INIT[S.lang]||S.lang.toUpperCase();
@@ -6447,21 +6489,27 @@ async function submitContactForm(){
     if(window.firebaseDb && window.firestoreCollection && window.firestoreAddDoc){
       const colRef=window.firestoreCollection(window.firebaseDb,'contact_submissions');
       await window.firestoreAddDoc(colRef,data);
-      alert('お問い合わせを送信しました。ありがとうございます！');
+      alert(S.lang === 'en' ? 'Thank you for your message!' : 'お問い合わせを送信しました。ありがとうございます!');
       // Clear form
       document.getElementById('contact-message').value='';
-      goTo('dashboard');
-      setBNav('bnav-dash');
+      if(email) document.getElementById('contact-email').value='';
+      setTimeout(() => {
+        goTo('dashboard');
+        setBNav('bnav-dash');
+      }, 500);
     }else{
       console.log('📮 Contact Form:',data);
-      alert('お問い合わせを送信しました。ありがとうございます！');
+      alert(S.lang === 'en' ? 'Thank you for your message!' : 'お問い合わせを送信しました。ありがとうございます!');
       document.getElementById('contact-message').value='';
-      goTo('dashboard');
-      setBNav('bnav-dash');
+      if(email) document.getElementById('contact-email').value='';
+      setTimeout(() => {
+        goTo('dashboard');
+        setBNav('bnav-dash');
+      }, 500);
     }
   }catch(error){
     console.error('Contact form error:',error);
-    alert('送信に失敗しました。もう一度お試しください。');
+    alert(S.lang === 'en' ? 'Failed to send. Please try again.' : '送信に失敗しました。もう一度お試しください。');
   }
 }
 
@@ -8063,7 +8111,7 @@ function openCustomerPortal() {
       あなただけの言語を創造し、学び、共有するプラットフォーム
     </div>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">
-      <a href="#" onclick="goTo('contact');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
+      <a href="#" onclick="showLegalModal('tokusho');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
         特定商取引法に基づく表記
       </a>
       <a href="#" onclick="showLegalModal('terms');return false;" style="color:var(--text-secondary);text-decoration:none;font-size:0.75rem;transition:color 0.15s;cursor:pointer;">
@@ -8082,6 +8130,210 @@ function openCustomerPortal() {
   </div>
 </footer>
 
-</script>
-</body>
-</html>
+<script>
+// ===== メモ管理システム =====
+let MEMOS = [];
+let currentEditingMemoId = null;
+
+// メモをIndexedDBから読み込み
+async function loadMemosFromDB() {
+  try {
+    const memos = await dbGet('app_memos');
+    MEMOS = memos || [];
+    renderMemoList();
+  } catch(error) {
+    console.error('Failed to load memos:', error);
+    MEMOS = [];
+    renderMemoList();
+  }
+}
+
+// メモをIndexedDBに保存
+async function saveMemosТoDB() {
+  try {
+    await dbSet('app_memos', MEMOS);
+  } catch(error) {
+    console.error('Failed to save memos:', error);
+  }
+}
+
+// メモリストのレンダリング
+function renderMemoList(filter = '') {
+  const listEl = document.getElementById('memo-list');
+  const emptyEl = document.getElementById('memo-empty');
+  
+  if (!listEl || !emptyEl) return;
+  
+  const filteredMemos = filter 
+    ? MEMOS.filter(m => 
+        m.title.toLowerCase().includes(filter.toLowerCase()) || 
+        m.content.toLowerCase().includes(filter.toLowerCase())
+      )
+    : MEMOS;
+  
+  if (filteredMemos.length === 0) {
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  
+  listEl.style.display = 'grid';
+  emptyEl.style.display = 'none';
+  
+  listEl.innerHTML = filteredMemos
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .map(memo => `
+      <div class="memo-card" onclick="editMemo('${memo.id}')">
+        <div class="memo-card-title">${escapeHtml(memo.title || '無題のメモ')}</div>
+        <div class="memo-card-preview">${escapeHtml(memo.content.substring(0, 150))}</div>
+        <div class="memo-card-footer">
+          <div class="memo-card-date">
+            <span>🕐</span>
+            <span>${formatMemoDate(memo.updatedAt)}</span>
+          </div>
+          <div style="color:var(--text-muted)">
+            ${memo.content.length} 文字
+          </div>
+        </div>
+      </div>
+    `).join('');
+}
+
+// メモ検索フィルター
+function filterMemos(query) {
+  renderMemoList(query);
+}
+
+// 新規メモ作成
+function createNewMemo() {
+  currentEditingMemoId = null;
+  document.getElementById('memo-editor-title').value = '';
+  document.getElementById('memo-editor-content').value = '';
+  document.getElementById('memo-delete-btn').style.display = 'none';
+  document.getElementById('memo-editor-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  
+  // フォーカス
+  setTimeout(() => {
+    document.getElementById('memo-editor-title').focus();
+  }, 100);
+}
+
+// メモ編集
+function editMemo(memoId) {
+  const memo = MEMOS.find(m => m.id === memoId);
+  if (!memo) return;
+  
+  currentEditingMemoId = memoId;
+  document.getElementById('memo-editor-title').value = memo.title;
+  document.getElementById('memo-editor-content').value = memo.content;
+  document.getElementById('memo-delete-btn').style.display = 'flex';
+  document.getElementById('memo-editor-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// メモ保存
+async function saveMemo() {
+  const title = document.getElementById('memo-editor-title').value.trim();
+  const content = document.getElementById('memo-editor-content').value.trim();
+  
+  if (!content) {
+    alert('メモの内容を入力してください');
+    return;
+  }
+  
+  const now = new Date().toISOString();
+  
+  if (currentEditingMemoId) {
+    // 既存メモの更新
+    const memo = MEMOS.find(m => m.id === currentEditingMemoId);
+    if (memo) {
+      memo.title = title || '無題のメモ';
+      memo.content = content;
+      memo.updatedAt = now;
+    }
+  } else {
+    // 新規メモの作成
+    const newMemo = {
+      id: 'memo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      title: title || '無題のメモ',
+      content: content,
+      createdAt: now,
+      updatedAt: now
+    };
+    MEMOS.push(newMemo);
+  }
+  
+  await saveMemosТoDB();
+  renderMemoList();
+  closeMemoEditor();
+  
+  // 保存完了の通知
+  showToast(S.lang === 'en' ? 'Memo saved' : 'メモを保存しました');
+}
+
+// メモ削除
+async function deleteMemo() {
+  if (!currentEditingMemoId) return;
+  
+  const confirmed = confirm(S.lang === 'en' 
+    ? 'Delete this memo?' 
+    : 'このメモを削除しますか？');
+  
+  if (!confirmed) return;
+  
+  MEMOS = MEMOS.filter(m => m.id !== currentEditingMemoId);
+  await saveMemosТoDB();
+  renderMemoList();
+  closeMemoEditor();
+  
+  showToast(S.lang === 'en' ? 'Memo deleted' : 'メモを削除しました');
+}
+
+// メモエディターを閉じる
+function closeMemoEditor() {
+  document.getElementById('memo-editor-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+  currentEditingMemoId = null;
+}
+
+// 日付フォーマット
+function formatMemoDate(isoString) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return '今';
+  if (diffMins < 60) return `${diffMins}分前`;
+  if (diffHours < 24) return `${diffHours}時間前`;
+  if (diffDays < 7) return `${diffDays}日前`;
+  
+  return date.toLocaleDateString(S.lang === 'en' ? 'en-US' : 'ja-JP', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+// HTMLエスケープ
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// トースト通知
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: calc(var(--bottom-nav-h) + 20px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    color: var(--text-primary);
+    padding: 1
