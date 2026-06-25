@@ -1,0 +1,77 @@
+// =============================================
+// LINGUA — SVG Icon Set
+// Usage: icon('name', size?) returns inline SVG string
+// Icons use currentColor so they inherit text color
+// =============================================
+const ICO={
+check:'<path d="M4 12l5 5L20 6"/>',
+checkCircle:'<circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/>',
+warn:'<path d="M12 3L2 20h20L12 3z"/><path d="M12 10v5M12 18v.5"/>',
+x:'<path d="M6 6l12 12M18 6L6 18"/>',
+arrR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+arrL:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+chevD:'<path d="M6 9l6 6 6-6"/>',
+chevU:'<path d="M6 15l6-6 6 6"/>',
+chevR:'<path d="M9 6l6 6-6 6"/>',
+sparkle:'<path d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7z"/>',
+sparkles:'<path d="M12 3l1.5 5 5 1.5-5 1.5L12 16l-1.5-5-5-1.5 5-1.5L12 3z"/><path d="M19 14l.8 2.5 2.5.8-2.5.8L19 21l-.8-2.5-2.5-.8 2.5-.8L19 14z"/>',
+flower:'<circle cx="12" cy="12" r="2.5"/><path d="M12 2a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM12 14a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM2 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4zM14 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4z"/>',
+book:'<path d="M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4V4z"/><path d="M20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8V4z"/>',
+books:'<path d="M4 4v16h4V4H4zM10 6v14h4V6h-4zM16 8l3 13 4-1-3-13-4 1z"/>',
+pencil:'<path d="M15 4l5 5L8 21H3v-5L15 4z"/>',
+edit:'<path d="M11 4H4v16h16v-7M18 2l4 4-10 10h-4v-4L18 2z"/>',
+corpus:'<path d="M4 4h12l4 4v12H4V4z"/><path d="M8 10h8M8 14h8M8 18h5"/>',
+lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
+globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/>',
+music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+galaxy:'<circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 00-7 17M12 22a10 10 0 007-17"/><circle cx="6" cy="6" r="1"/><circle cx="18" cy="18" r="1"/><circle cx="18" cy="6" r="1"/>',
+gem:'<path d="M6 3h12l3 6-9 12L3 9l3-6z"/><path d="M3 9h18M9 3l-3 6 6 12M15 3l3 6-6 12"/>',
+ruler:'<path d="M3 10L10 3l11 11-7 7L3 10z"/><path d="M7 10l2 2M9 8l2 2M11 6l2 2M13 14l2 2M15 12l2 2"/>',
+link:'<path d="M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>',
+trophy:'<path d="M6 4h12v3a4 4 0 01-4 4h-4a4 4 0 01-4-4V4z"/><path d="M6 5H3v2a3 3 0 003 3M18 5h3v2a3 3 0 01-3 3"/><path d="M10 11v4h4v-4M8 20h8M12 15v5"/>',
+speaker:'<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15 9a4 4 0 010 6M18 6a8 8 0 010 12"/>',
+pen:'<path d="M12 19l7-7-4-4-7 7v4h4zM13 7l4 4"/>',
+calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+scene:'<rect x="3" y="6" width="18" height="14" rx="1"/><path d="M3 6l4-3h4l-2 3M11 6l4-3h4l-2 3"/>',
+dice:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2"/><circle cx="16" cy="8" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="8" cy="16" r="1.2"/><circle cx="16" cy="16" r="1.2"/>',
+cloud:'<path d="M6 18a4 4 0 01-1-8 6 6 0 0111-1 4 4 0 013 8H6z"/>',
+circleEmpty:'<circle cx="12" cy="12" r="9"/>',
+bot:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 4v4M8 14h.5M15.5 14h.5M9 18h6"/>',
+user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+home:'<path d="M4 11l8-7 8 7v9h-5v-6h-6v6H4v-9z"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4 12H1M23 12h-3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+clipboard:'<rect x="6" y="4" width="12" height="18" rx="1"/><rect x="9" y="2" width="6" height="4" rx="1"/>',
+search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+leaf:'<path d="M5 19c0-8 6-14 16-14 0 10-6 16-14 16l-2-2z"/><path d="M5 19L16 8"/>',
+chat:'<path d="M4 5h16v11H8l-4 4V5z"/>',
+play:'<path d="M7 4v16l13-8L7 4z"/>',
+help:'<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 016 0c0 2-3 2-3 4M12 17v.5"/>',
+download:'<path d="M12 3v13M6 11l6 6 6-6M4 20h16"/>',
+upload:'<path d="M12 21V8M6 13l6-6 6 6M4 4h16"/>',
+hash:'<path d="M5 9h14M5 15h14M10 3L8 21M16 3l-2 18"/>',
+tag:'<path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
+pointR:'<path d="M5 12h14M13 6l6 6-6 6"/><circle cx="19" cy="12" r="1"/>',
+box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+bolt:'<path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>',
+stopwatch:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v3"/>',
+ban:'<circle cx="12" cy="12" r="10"/><path d="M5 5l14 14"/>',
+bulb:'<path d="M9 21h6M10 18h4M12 3a6 6 0 00-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 00-4-10z"/>',
+pin:'<path d="M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z"/><circle cx="12" cy="9" r="2.5"/>',
+cap:'<path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c0 2 3 3 6 3s6-1 6-3v-5M22 9v6"/>',
+refresh:'<path d="M3 12a9 9 0 0116-5M21 12a9 9 0 01-16 5"/><path d="M19 2v5h-5M5 22v-5h5"/>',
+bug:'<circle cx="12" cy="11" r="5"/><path d="M12 6V3M8 8L5 5M16 8l3-3M7 11H3M21 11h-4M8 14l-3 3M16 14l3 3M12 16v5"/>',
+letters:'<path d="M4 18L7 6h1l3 12M5 14h5M15 6v12M13 6h4M13 18h4"/>',
+door:'<path d="M6 21V3h12v18M10 12v1"/><path d="M3 21h18"/>',
+wave:'<path d="M12 12c0-5 2-7 4-7s3 1 3 3v8a6 6 0 01-6 6 6 6 0 01-6-6V8M6 10l3-4"/>',
+eye:'<path d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+minus:'<path d="M5 12h14"/>',
+spinner:'<path d="M12 2a10 10 0 019 6" opacity=".35"/><path d="M21 12a9 9 0 01-6 8.5" opacity=".2"/><path d="M12 22a10 10 0 01-9-6" opacity=".45"/><path d="M3 12a9 9 0 016-8.5"/>',
+};
+function icon(name,size){
+  const body=ICO[name];
+  if(!body)return '';
+  const s=size?(size+'px'):'1em';
+  return '<svg class="ico" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">'+body+'</svg>';
+}
+window.icon=icon;

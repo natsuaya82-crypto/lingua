@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>Lingua — コンラングビルダー</title>
+<meta name="description" content="Build artificial languages with phonology, vocabulary, grammar and world scripts.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,400&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+let stripe=null;
+function initStripe(){try{stripe=Stripe("pk_live_51QUl87B4I5S2p9M0O5H4A9C8D7E6F5G4H3I2J1K0L9M8N7O6P5Q4R3S2T1U0V");window.stripe=stripe;console.log('Stripe initialized');}catch(e){}}
+document.addEventListener('DOMContentLoaded',initStripe);
+window.addEventListener('load',initStripe);
+function showToast(msg,type='info'){
+  let box=document.getElementById('toast-box');
+  if(!box){box=document.createElement('div');box.id='toast-box';box.style.cssText='position:fixed;top:env(safe-area-inset-top,16px);top:max(env(safe-area-inset-top),16px);left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none';document.body.appendChild(box);}
+  const t=document.createElement('div');
+  const ico=type==='success'?'✅':type==='error'?'⚠️':'✦';
+  t.innerHTML=ico+' <span>'+msg+'</span>';
+  t.style.cssText='background:rgba(20,20,30,0.96);border:1px solid rgba(140,120,255,0.25);color:#e8e4f0;padding:10px 18px;border-radius:10px;font-size:0.84rem;backdrop-filter:blur(12px);display:flex;gap:8px;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:opacity 0.4s;white-space:nowrap;max-width:90vw';
+  if(type==='success')t.style.borderColor='rgba(0,255,157,0.35)';
+  if(type==='error')t.style.borderColor='rgba(232,122,122,0.35)';
+  box.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},3800);
+}
+</script>
+</head>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+button,a,.word-card,.bnav-btn{-webkit-tap-highlight-color:transparent;cursor:pointer}
+*{-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0e;--sf:#13131a;--sf2:#1a1a24;--sf3:#22222e;
+  --br:rgba(140,120,255,0.09);--brh:rgba(140,120,255,0.22);--brb:rgba(140,120,255,0.38);
+  --tx:#e8e4f0;--txs:#8a8498;--txm:#44404e;
+  --ac:#00ff9d;--acd:rgba(0,255,157,0.10);--acb:rgba(0,255,157,0.30);
+  --ac2:#00b8ff;--ac2d:rgba(0,184,255,0.09);
+  --ok:#4db87a;--okd:rgba(77,184,122,0.10);--okb:rgba(77,184,122,0.28);
+  --gd:#c9a96e;--gdd:rgba(201,169,110,0.10);--gdb:rgba(201,169,110,0.28);
+  --rs:#e87a7a;--rsd:rgba(232,122,122,0.10);--rsb:rgba(232,122,122,0.28);
+  --pur:#8c7eff;--purd:rgba(140,126,255,0.10);--purb:rgba(140,126,255,0.30);
+  --bnav-h:64px;--topbar-h:56px;
+  --glow:0 0 18px rgba(140,126,255,0.14);
+}
+body{background:var(--bg);background-image:linear-gradient(135deg,#0e0920,#0a0a0e,#090e1a);background-attachment:fixed;color:var(--tx);font-family:'Crimson Pro','Noto Sans JP',serif;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior:none;-webkit-overflow-scrolling:touch;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 15% 25%,rgba(255,255,255,.25) 0,transparent 100%),radial-gradient(1px 1px at 55% 65%,rgba(255,255,255,.18) 0,transparent 100%),radial-gradient(1.5px 1.5px at 68% 72%,rgba(140,126,255,.32) 0,transparent 100%),radial-gradient(1.5px 1.5px at 22% 55%,rgba(192,123,255,.22) 0,transparent 100%);pointer-events:none;z-index:0}
+body>*{position:relative;z-index:1}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);border-bottom:1px solid var(--br);display:flex;align-items:center;padding:0 12px 0 14px;justify-content:space-between;position:sticky;top:0;background:rgba(10,10,14,.92);backdrop-filter:blur(20px);z-index:200;padding-top:env(safe-area-inset-top);height:calc(var(--topbar-h) + env(safe-area-inset-top))}
+.brand{font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;letter-spacing:.25em;background:linear-gradient(135deg,#e8e4f0,#8c7eff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer;flex-shrink:0}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.plan-badge{font-size:.6rem;font-weight:800;letter-spacing:.1em;padding:4px 9px;border-radius:20px;cursor:pointer;transition:all .18s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.plan-badge:active{transform:scale(.94)}
+.plan-free{background:var(--sf2);border:1px solid var(--br);color:var(--txs)}
+.plan-lite{background:var(--acd);border:1px solid var(--acb);color:var(--ac)}
+.plan-pro{background:var(--gdd);border:1px solid var(--gdb);color:var(--gd)}
+.lang-btn{font-size:.65rem;font-weight:700;padding:4px 8px;border-radius:8px;border:1px solid var(--br);background:var(--sf2);color:var(--txs);cursor:pointer;transition:all .15s;letter-spacing:.06em;-webkit-tap-highlight-color:transparent}
+.lang-btn:active{transform:scale(.94)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--sf2);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;overflow:hidden;cursor:pointer;transition:border-color .15s;flex-shrink:0}
+.avatar:hover{border-color:var(--brh)}
+.avatar img{width:100%;height:100%;object-fit:cover}
+
+/* PAGES */
+.page{display:none;min-height:calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - var(--bnav-h));padding-bottom:calc(var(--bnav-h) + 24px + env(safe-area-inset-bottom))}
+.page.active{display:block;animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.pi{max-width:680px;margin:0 auto;padding:20px 16px}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;border-top:1px solid var(--br);background:rgba(10,10,14,.96);backdrop-filter:blur(20px);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.bnav-in{display:flex;width:100%;justify-content:space-around}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border:none;background:transparent;color:var(--txm);font-family:inherit;font-size:.54rem;border-radius:10px;transition:all .18s;touch-action:manipulation}
+.bnav-btn:active{transform:scale(.93)}
+.bnav-btn.active{color:var(--ac)}
+.bni{font-size:1.15rem;line-height:1;transition:transform .18s}
+.bnav-btn.active .bni{transform:scale(1.15)}
+
+/* COMPONENTS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:10px;border:1px solid var(--br);background:var(--sf2);color:var(--tx);font-family:inherit;font-size:.84rem;font-weight:500;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;white-space:nowrap}
+.btn:hover{border-color:var(--brh)}.btn:active{transform:scale(.96)}
+.btn-p{background:linear-gradient(135deg,rgba(0,255,157,.16),rgba(0,184,255,.10));border-color:var(--acb);color:var(--ac)}
+.btn-p:hover{background:linear-gradient(135deg,rgba(0,255,157,.25),rgba(0,184,255,.16))}
+.btn-g{background:var(--gdd);border-color:var(--gdb);color:var(--gd)}
+.btn-r{background:var(--rsd);border-color:var(--rsb);color:var(--rs)}
+.btn-gh{background:transparent;border-color:var(--br)}
+.btn-pur{background:var(--purd);border-color:var(--purb);color:var(--pur)}
+.btn-sm{padding:5px 12px;font-size:.74rem;border-radius:7px}
+.btn-xs{padding:3px 9px;font-size:.66rem;border-radius:6px}
+.btn-bl{width:100%;justify-content:center}
+.fl{display:block;font-size:.68rem;font-weight:600;color:var(--txs);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.inp{width:100%;padding:9px 12px;border:1px solid var(--br);border-radius:9px;font-family:inherit;font-size:.86rem;background:var(--sf2);color:var(--tx);outline:none;transition:all .15s}
+.inp:focus{border-color:var(--acb);box-shadow:0 0 0 3px var(--acd)}
+.inp::placeholder{color:var(--txm)}
+.inp-ta{resize:none;min-height:72px;line-height:1.6}
+select.inp{cursor:pointer}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:20px;transition:border-color .15s;margin-bottom:12px}
+.card:hover{border-color:var(--brh)}
+.sh{font-size:.6rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--txm);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sh::after{content:'';flex:1;height:1px;background:var(--br)}
+.field-block{margin-bottom:14px}
+.field-block:last-child{margin-bottom:0}
+.ptitle{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;letter-spacing:.06em;margin-bottom:4px}
+.psub{font-size:.78rem;color:var(--txs);margin-bottom:16px}
+
+/* WORD CARD */
+.wc{display:flex;align-items:center;gap:10px;padding:9px 13px;border:1px solid var(--br);border-radius:9px;background:var(--sf2);margin-bottom:6px;transition:border-color .15s;animation:fadeUp .2s ease both}
+.wc:hover{border-color:var(--brh)}
+.wm{font-size:.9rem;font-weight:500;color:var(--tx)}
+.wmn{font-size:.73rem;color:var(--txs);margin-top:1px}
+.wpos{font-size:.58rem;font-weight:700;color:var(--txm);background:var(--sf);border:1px solid var(--br);border-radius:4px;padding:2px 6px;white-space:nowrap;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.ti{font-size:.58rem;padding:1px 6px;border:1px solid var(--br);border-radius:3px;color:var(--txm);margin-right:3px}
+
+/* MODULE GRID */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{border:1px solid var(--br);border-radius:12px;padding:14px;cursor:pointer;background:var(--sf);transition:all .18s;position:relative;overflow:hidden}
+.mc:hover{border-color:var(--brh);transform:translateY(-1px)}
+.mc.done{border-color:var(--okb);background:var(--okd)}
+.mi{font-size:1.5rem;margin-bottom:5px}
+.mt{font-size:.78rem;font-weight:700;color:var(--tx);margin-bottom:2px}
+.ms{font-size:.66rem;color:var(--txs)}
+.mchk{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--ok);color:#fff;font-size:.62rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* SPILL STATS */
+.spill{font-size:.72rem;background:var(--sf2);border:1px solid var(--br);border-radius:8px;padding:6px 12px;display:inline-flex;gap:6px;align-items:center}
+
+/* PROGRESS BAR */
+.prbar{height:5px;background:var(--sf2);border-radius:3px;overflow:hidden}
+.prbf{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:3px;transition:width .5s ease}
+
+/* GUEST/UPGRADE BANNERS */
+.gb{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--br);border-radius:12px;background:var(--sf);margin-bottom:18px;cursor:pointer}
+.ub{display:none;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--gdb);border-radius:12px;background:var(--gdd);margin-bottom:18px;cursor:pointer}
+
+/* PHONEME */
+.ipas{margin-bottom:14px}
+.ipag{display:flex;flex-wrap:wrap;gap:4px}
+.ipabtn{padding:5px 10px;border:1px solid var(--br);border-radius:7px;background:var(--sf2);color:var(--txs);font-family:monospace;font-size:.88rem;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;position:relative}
+.ipabtn:hover{border-color:var(--brh);color:var(--tx)}
+.ipabtn.sel{background:var(--acd);border-color:var(--acb);color:var(--ac)}
+.ipabtn .play-ico{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--pur);color:#fff;font-size:.45rem;display:none;align-items:center;justify-content:center}
+.ipabtn:hover .play-ico,.ipabtn.sel .play-ico{display:flex}
+.pchip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--acb);border-radius:6px;background:var(--acd);color:var(--ac);font-size:.82rem;font-family:monospace;margin:2px}
+.pchip .x{font-size:.7rem;color:var(--txs);cursor:pointer;line-height:1}
+.pchip .x:hover{color:var(--rs)}
+.pchip .spk{font-size:.7rem;cursor:pointer;opacity:.7}
+.pchip .spk:hover{opacity:1}
+
+/* TABS */
+.tabbar{display:flex;gap:2px;border-bottom:1px solid var(--br);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tabbtn{padding:6px 12px;border:none;background:transparent;color:var(--txs);font-family:inherit;font-size:.74rem;border-radius:6px 6px 0 0;white-space:nowrap;cursor:pointer;transition:all .15s;border-bottom:2px solid transparent;-webkit-tap-highlight-color:transparent}
+.tabbtn.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tabpn{display:none}
+.tabpn.active{display:block}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--br)}
+.tsw{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+.tsw input{opacity:0;width:0;height:0}
+.ttr{position:absolute;cursor:pointer;inset:0;background:var(--sf3);border-radius:12px;transition:.3s}
+.ttr:before{position:absolute;content:'';height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.ttr{background:var(--ok)}
+input:checked+.ttr:before{transform:translateX(18px)}
+
+/* POS FILTER BAR */
+.pos-fb{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:10px}
+.pos-fb::-webkit-scrollbar{display:none}
+.pos-fbtn{padding:4px 10px;border:1px solid var(--br);border-radius:20px;background:var(--sf2);color:var(--txs);font-size:.68rem;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.pos-fbtn.act{background:var(--acd);border-color:var(--acb);color:var(--ac)}
+
+/* EDITOR OVERLAY */
+.eo{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.eo.open{transform:none}
+.et{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--br);background:rgba(10,10,14,.92);backdrop-filter:blur(16px);flex-shrink:0;padding-top:calc(12px + env(safe-area-inset-top))}
+.etr{font-family:'Cinzel',serif;font-size:.9rem;font-weight:700;letter-spacing:.08em;color:var(--tx)}
+.eb{flex:1;overflow-y:auto;padding:20px 16px;-webkit-overflow-scrolling:touch}
+
+/* MEMO OVERLAY */
+.memo-ov{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.memo-ov.open{transform:none}
+
+/* MODALS */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg:not(.open){display:none}
+.modal-bg.open{display:flex;animation:fadeIn .2s ease}
+.lsheet{background:var(--sf);border-radius:20px 20px 0 0;padding:28px 24px calc(28px + env(safe-area-inset-bottom));width:100%;max-width:500px;max-height:90dvh;overflow-y:auto}
+.msheet{background:var(--sf);border-radius:16px;padding:24px;width:calc(100% - 32px);max-width:480px;max-height:85dvh;overflow-y:auto;margin:auto}
+.ltit{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;text-align:center;margin-bottom:6px;background:linear-gradient(135deg,#e8e4f0,#8c7eff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lsub{font-size:.78rem;color:var(--txs);text-align:center;margin-bottom:20px}
+.ldiv{display:flex;align-items:center;gap:10px;color:var(--txm);font-size:.72rem;margin:10px 0}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--br)}
+.lfooter{font-size:.7rem;color:var(--txm);text-align:center;margin-top:14px}
+.lfooter a{color:var(--ac);cursor:pointer}
+
+/* UPGRADE MODAL */
+.pcrd{border:1px solid var(--br);border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .18s;background:var(--sf2)}
+.pcrd:hover{border-color:var(--brh)}
+.pcrd.rec{border-color:var(--gdb);background:var(--gdd)}
+.ppr{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:700;color:var(--tx)}
+.pfeat{font-size:.76rem;color:var(--txs);padding:2px 0;display:flex;align-items:center;gap:6px}
+.pfeat::before{content:'✓';color:var(--ok);font-size:.7rem}
+
+/* PROFILE */
+.prof-wrap{max-width:680px;margin:0 auto;padding:20px 16px calc(120px + env(safe-area-inset-bottom))}
+.p-avlg{width:72px;height:72px;border-radius:50%;background:var(--sf2);border:2px solid var(--brh);display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;overflow:hidden;transition:border-color .15s}
+.p-avlg:hover{border-color:var(--acb)}
+.p-avlg img{width:100%;height:100%;object-fit:cover}
+.vc-banner{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid var(--purb);border-radius:12px;background:var(--purd);margin-bottom:14px}
+
+/* FAQ */
+.fqi{border-bottom:1px solid var(--br);padding:4px 0}
+.fqq{display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;font-size:.86rem;gap:10px}
+.fqa{font-size:.78rem;color:var(--txs);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.fqa.open{max-height:300px;padding-bottom:12px}
+
+/* ROADMAP */
+.roadmap-section{margin:16px 0}
+.roadmap-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--br);border-radius:10px;background:var(--sf2);margin-bottom:6px;cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent}
+.roadmap-item:active{transform:scale(.98)}
+.roadmap-item.done{border-color:var(--okb);background:var(--okd)}
+.rm-icon{font-size:1.2rem;flex-shrink:0}
+.rm-title{font-size:.82rem;font-weight:600;color:var(--tx);flex:1}
+.rm-pts{font-size:.62rem;padding:2px 7px;border-radius:10px;background:var(--sf);border:1px solid var(--br);color:var(--txm);white-space:nowrap}
+.rm-pts.earned{background:var(--okd);border-color:var(--okb);color:var(--ok)}
+.rm-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;transition:all .18s}
+.roadmap-item.done .rm-check{background:var(--ok);border-color:var(--ok);color:#fff}
+.total-pts{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--purb);border-radius:10px;background:var(--purd);margin-bottom:14px}
+.total-pts-num{font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;color:var(--pur)}
+
+/* ACHIEVEMENT MODAL */
+.ach-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.ach-modal:not(.open){display:none}
+.ach-modal.open{display:flex;animation:fadeIn .2s ease}
+.ach-box{background:var(--sf);border:1px solid var(--purb);border-radius:20px;padding:28px;width:calc(100% - 48px);max-width:380px;text-align:center}
+.ach-icon{font-size:3.5rem;margin-bottom:12px}
+.ach-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--pur)}
+.ach-desc{font-size:.8rem;color:var(--txs);margin-bottom:16px;line-height:1.6}
+.ach-pts-badge{display:inline-block;padding:6px 16px;border-radius:20px;background:var(--purd);border:1px solid var(--purb);color:var(--pur);font-size:.78rem;font-weight:700;margin-bottom:16px}
+
+/* WORLD SCRIPTS */
+.ws-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+.ws-card{border:1px solid var(--br);border-radius:10px;padding:12px;cursor:pointer;background:var(--sf2);transition:all .18s;-webkit-tap-highlight-color:transparent}
+.ws-card:hover{border-color:var(--brh)}
+.ws-card.sel{border-color:var(--purb);background:var(--purd)}
+.ws-name{font-size:.72rem;font-weight:700;color:var(--tx);margin-bottom:4px}
+.ws-chars{font-size:.72rem;color:var(--txs);letter-spacing:.05em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.5}
+.ws-preview{font-size:1.1rem;letter-spacing:.1em;color:var(--pur);margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.char-grid{display:flex;flex-wrap:wrap;gap:6px;padding:12px;border:1px solid var(--br);border-radius:10px;background:var(--sf2);max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.char-btn{padding:6px 8px;border:1px solid var(--br);border-radius:6px;background:var(--sf);color:var(--tx);font-size:1rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;min-width:36px;text-align:center}
+.char-btn:hover{border-color:var(--purb);background:var(--purd);color:var(--pur)}
+.char-btn:active{transform:scale(.9)}
+.script-input{font-size:1.1rem;letter-spacing:.08em}
+
+/* SETTINGS PAGE */
+.settings-section{margin-bottom:16px}
+.settings-title{font-size:.58rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txm);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.settings-title::after{content:'';flex:1;height:1px;background:var(--br)}
+.lang-pills{display:flex;gap:6px;flex-wrap:wrap}
+.lang-pill{padding:6px 14px;border:1px solid var(--br);border-radius:20px;background:var(--sf2);color:var(--txs);font-size:.78rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.lang-pill.active{background:var(--purd);border-color:var(--purb);color:var(--pur);font-weight:700}
+
+/* CORPUS CARD */
+.cc{border:1px solid var(--br);border-radius:10px;padding:12px;background:var(--sf2);margin-bottom:8px;animation:fadeUp .2s ease both}
+.ccl{font-family:'Cinzel',serif;font-size:.92rem;color:var(--tx);margin-bottom:3px}
+.cck{font-size:.74rem;color:var(--ac2);margin-bottom:3px}
+.ccj{font-size:.78rem;color:var(--txs)}
+
+/* AI CHAT */
+.cw{display:flex;flex-direction:column;height:calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - var(--bnav-h));overflow:hidden}
+.cms{flex:1;overflow-y:auto;padding:12px 16px;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px}
+.cb{display:flex;max-width:82%}
+.cb.u{margin-left:auto;flex-direction:row-reverse}
+.cbi{padding:10px 14px;border-radius:14px;font-size:.84rem;line-height:1.55}
+.cb.ai .cbi{background:var(--sf2);border:1px solid var(--br);color:var(--tx)}
+.cb.u .cbi{background:linear-gradient(135deg,rgba(0,255,157,.18),rgba(0,184,255,.12));border:1px solid var(--acb);color:var(--tx)}
+.cir{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--br);padding-bottom:calc(10px + env(safe-area-inset-bottom));background:rgba(10,10,14,.8);flex-shrink:0}
+.csug{display:flex;gap:6px;padding:8px 16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
+.csug::-webkit-scrollbar{display:none}
+.sc{padding:5px 12px;border:1px solid var(--br);border-radius:14px;font-size:.72rem;white-space:nowrap;cursor:pointer;background:var(--sf2);color:var(--txs);-webkit-tap-highlight-color:transparent;transition:all .15s}
+.sc:hover{border-color:var(--brh);color:var(--tx)}
+
+/* LIBRARY */
+.lbc{border:1px solid var(--br);border-radius:12px;padding:14px;background:var(--sf);transition:border-color .15s}
+.lbc:hover{border-color:var(--brh)}
+.lbn{font-family:'Cinzel',serif;font-size:.9rem;font-weight:700;color:var(--tx);margin-bottom:4px}
+.lbg{font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--sf2);border:1px solid var(--br);color:var(--txm);text-transform:uppercase;letter-spacing:.06em}
+.lbd{font-size:.76rem;color:var(--txs);margin:8px 0;line-height:1.55}
+.lbm{display:flex;gap:12px;font-size:.68rem;color:var(--txm)}
+
+/* MEMO */
+.memc{border:1px solid var(--br);border-radius:10px;padding:12px;background:var(--sf2);margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.memc:hover{border-color:var(--brh)}
+.memct{font-size:.84rem;font-weight:600;color:var(--tx);margin-bottom:4px}
+.memcb{font-size:.74rem;color:var(--txs);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.memcd{font-size:.62rem;color:var(--txm);margin-top:6px}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--txs);font-size:.82rem}
+
+/* MISC */
+.law-t{width:100%;border-collapse:collapse;font-size:.78rem}
+.law-t th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--br);color:var(--txs);font-weight:600;white-space:nowrap;width:40%}
+.law-t td{padding:8px 10px;border-bottom:1px solid var(--br);color:var(--tx)}
+.autosave{position:fixed;bottom:calc(var(--bnav-h) + 6px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:.65rem;color:var(--txm);background:var(--sf2);border:1px solid var(--br);padding:3px 10px;border-radius:10px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:100}
+.autosave.show{opacity:1}
+.vispop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.vispop.open{display:flex;animation:fadeIn .2s ease}
+.vbox{background:var(--sf);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:500px}
+.vopt{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--br);border-radius:10px;cursor:pointer;margin-bottom:8px;background:var(--sf2);transition:border-color .15s}
+.vopt:hover,.vopt.sel{border-color:var(--acb);background:var(--acd)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{display:inline-block;animation:spin 1s linear infinite}
+
+/* FOOTER */
+.page-footer{border-top:1px solid var(--br);padding:24px 0 0;margin-top:32px}
+.footer-brand{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.2em;color:var(--txm);margin-bottom:12px;text-align:center}
+.footer-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px;font-size:.7rem;margin-bottom:12px}
+.footer-links a{color:var(--txm);cursor:pointer;transition:color .15s;text-decoration:none}
+.footer-links a:hover{color:var(--txs)}
+.footer-copy{font-size:.6rem;color:var(--txm);text-align:center;padding-bottom:4px}
+.footer-langs{display:flex;justify-content:center;gap:8px;margin-bottom:12px}
+.footer-langs button{padding:3px 8px;border:1px solid var(--br);border-radius:6px;background:transparent;color:var(--txm);font-size:.62rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.footer-langs button.act{border-color:var(--purb);color:var(--pur)}
+
+/* VIS IND */
+.vi{display:flex;align-items:center;gap:4px;font-size:.65rem;color:var(--txm);border:1px solid var(--br);border-radius:8px;padding:3px 8px;cursor:pointer;transition:border-color .15s;white-space:nowrap}
+.vi:hover{border-color:var(--brh)}
+
+/* SPINNING */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{display:inline-block;animation:spin 1s linear infinite}
+
+/* GRAMMAR BOOK */
+.gr-book{display:flex;flex-direction:column;gap:0}
+.gr-chapnav{display:flex;gap:0;overflow-x:auto;border:1px solid var(--br);border-radius:12px;margin-bottom:16px;scrollbar-width:none;background:var(--sf2)}
+.gr-chapnav::-webkit-scrollbar{display:none}
+.gr-chapbtn{flex-shrink:0;padding:10px 14px;border:none;background:transparent;color:var(--txs);font-family:inherit;font-size:.68rem;cursor:pointer;border-right:1px solid var(--br);transition:all .18s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px;-webkit-tap-highlight-color:transparent}
+.gr-chapbtn:last-child{border-right:none}
+.gr-chapbtn.act{background:var(--purd);color:var(--pur)}
+.gr-chapbtn:active{opacity:.7}
+.gr-ch-n{font-family:'Cinzel',serif;font-size:.52rem;font-weight:700;letter-spacing:.12em;opacity:.6}
+.gr-page-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--br);border-radius:12px;background:var(--sf2);margin-bottom:16px}
+.gr-ch-num{font-size:.58rem;font-weight:700;letter-spacing:.14em;color:var(--pur);text-transform:uppercase}
+.gr-ch-title{font-family:'Cinzel',serif;font-size:.98rem;font-weight:700;margin-top:2px}
+.gr-opts{display:flex;flex-wrap:wrap;gap:8px}
+.gr-ta{min-height:200px;font-family:inherit;line-height:1.8;font-size:.86rem}
+
+/* CHARMAP TABLE */
+.cm-table{border:1px solid var(--br);border-radius:10px;overflow:hidden}
+.cm-header{display:grid;grid-template-columns:60px 1fr 50px 36px;gap:8px;padding:8px 12px;background:var(--sf3);border-bottom:1px solid var(--br);font-size:.62rem;font-weight:700;color:var(--txs);text-transform:uppercase;letter-spacing:.06em;align-items:center}
+.cm-row{display:grid;grid-template-columns:60px 1fr 50px 36px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--br);align-items:center}
+.cm-row:last-child{border-bottom:none}
+.cm-sound{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:700;color:var(--pur);text-align:center}
+.cm-char-inp{text-align:center;font-size:1.15rem;padding:5px 6px;width:100%}
+.cm-preview{font-size:1.4rem;text-align:center;color:var(--ac);min-height:28px;display:flex;align-items:center;justify-content:center}
+
+/* ===== PC LAYOUT ===== */
+@media(min-width:768px){
+  :root{--topbar-h:60px;--bnav-h:0px}
+  .bnav{display:none}
+  .pc-hide{display:none !important}
+  .page{min-height:calc(100dvh - var(--topbar-h));padding-bottom:60px}
+  .pi{max-width:900px;padding:28px 32px}
+  .mg{grid-template-columns:repeat(3,1fr)}
+  .ws-grid{grid-template-columns:repeat(4,1fr)}
+  .topbar{padding:0 32px;height:var(--topbar-h)}
+  .brand{font-size:1.3rem}
+  /* PC サイドバー型ナビ */
+  .pc-nav{display:flex;gap:6px;margin-left:32px}
+  .pc-nav-btn{padding:6px 14px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--txs);font-family:inherit;font-size:.78rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .pc-nav-btn:hover{color:var(--tx);border-color:var(--br)}
+  .pc-nav-btn.active{color:var(--ac);background:var(--acd);border-color:var(--acb)}
+  /* vocab 2カラム追加フォーム */
+  .vocab-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
+  /* モーダルをセンタリング */
+  .lsheet{border-radius:16px;max-width:480px;margin:auto}
+  .modal-bg{align-items:center}
+  /* エディタをサイドシートに */
+  .eo{width:min(680px,90vw);right:0;left:auto;border-left:1px solid var(--br);transform:translateX(100%)}
+  .eo.open{transform:none}
+}
+@media(max-width:767px){
+  .pc-nav{display:none}
+  .vocab-add-grid{display:block}
+}
+</style>
+<body>
+
+<div id="loading-screen" style="position:fixed;inset:0;background:#0a0a0e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s">
+  <div style="font-family:'Cinzel',serif;font-size:2rem;letter-spacing:.35em;background:linear-gradient(135deg,#e8e4f0,#8c7eff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:24px">LINGUA</div>
+  <div style="width:100px;height:2px;background:rgba(140,120,255,0.15);border-radius:1px;overflow:hidden"><div id="load-bar" style="width:0;height:100%;background:linear-gradient(90deg,#00ff9d,#00b8ff);transition:width 1s ease"></div></div>
+</div>
+
+<div id="app" style="display:none">
+  <header class="topbar">
+    <div class="brand" onclick="goTo('dashboard')">LINGUA</div>
+    <nav class="pc-nav" id="pc-nav">
+      <button class="pc-nav-btn active" id="pcn-dashboard" onclick="goTo('dashboard')">🏠 <span data-i18n="home">ホーム</span></button>
+      <button class="pc-nav-btn" id="pcn-vocab" onclick="goTo('vocab')">📖 <span data-i18n="vocab">語彙</span></button>
+      <button class="pc-nav-btn" id="pcn-aichat" onclick="goTo('aichat')">🤖 AI</button>
+      <button class="pc-nav-btn" id="pcn-memo" onclick="goTo('memo')">📝 <span data-i18n="memo">メモ</span></button>
+      <button class="pc-nav-btn" id="pcn-settings" onclick="goTo('settings')">⚙️ <span data-i18n="settings">設定</span></button>
+    </nav>
+    <div class="topbar-right">
+      <div class="vi" id="vis-ind" onclick="openVisPop()"><span id="vis-tx">🔒 非公開</span></div>
+      <button class="plan-badge plan-free" id="plan-badge" onclick="openUpgrade()" data-i18n-plan>FREE</button>
+      <button class="lang-btn" id="lang-btn" onclick="openLangPicker()">JP</button>
+      <div class="avatar" id="top-avatar" onclick="goTo('settings')">✦</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page active">
+      <div class="pi">
+        <div id="guest-banner" class="gb" onclick="openLogin()">
+          <span style="font-size:1.4rem">👤</span>
+          <div><div style="font-size:.84rem;font-weight:600" data-i18n="guestMode">ゲストモードで利用中</div><div style="font-size:.72rem;color:var(--txs);margin-top:2px" data-i18n="loginPrompt">ログインでクラウド同期・全機能が使えます</div></div>
+          <button class="btn btn-sm btn-p" style="margin-left:auto;flex-shrink:0" data-i18n="login">ログイン</button>
+        </div>
+        <div id="upgrade-banner" class="ub" onclick="openUpgrade()">
+          <span style="font-size:1.4rem">💎</span>
+          <div><div style="font-size:.84rem;font-weight:600;color:var(--gd)" data-i18n="upgradeBanner">Proにアップグレード</div><div style="font-size:.72rem;color:var(--txs);margin-top:2px" data-i18n="upgradeDesc">クラウド同期・無制限AI・すべての機能</div></div>
+          <button class="btn btn-sm btn-g" style="margin-left:auto;flex-shrink:0" data-i18n="details">詳細</button>
+        </div>
+
+        <div id="daily-card" class="card" style="margin-bottom:16px">
+          <div class="sh">📅 <span data-i18n="todaySentence">今日の1文</span></div>
+          <div id="d-topic" style="padding:10px 14px;border:1px solid var(--acc);border-radius:10px;background:rgba(139,92,246,.07);margin-bottom:10px">
+            <div style="font-size:.65rem;color:var(--acc);font-weight:600;margin-bottom:3px" data-i18n="todayScene">今日のシーン</div>
+            <div id="d-topic-scene" style="font-size:.84rem;color:var(--tx);font-weight:500;margin-bottom:3px"></div>
+            <div id="d-topic-hint" style="font-size:.7rem;color:var(--txs)"></div>
+          </div>
+          <div id="d-sent" style="font-family:'Cinzel',serif;font-size:.95rem;color:var(--tx);margin-bottom:4px;min-height:1.2em"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn btn-sm btn-p" onclick="openEditor('daily')">✏️ <span data-i18n="writeSentence">作文する</span></button>
+            <button class="btn btn-sm btn-pur" id="viola-share-btn" onclick="shareToViola()" style="display:none" data-i18n="violaShare">🌸 Violaで共有</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="ptitle" id="d-lname">新しい言語</div>
+            <div class="psub" id="d-lsub">架空言語を設計しよう</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-sm btn-gh" onclick="openLangNameEditor()">✏️ <span data-i18n="langName">言語名</span></button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="spill">📖 <span data-i18n="vocab">語彙</span>: <strong id="sw">0</strong></div>
+          <div class="spill">🔤 <span data-i18n="phonemes">音素</span>: <strong id="sp">0</strong></div>
+          <div class="spill">📝 <span data-i18n="corpus">例文</span>: <strong id="sc">0</strong></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.72rem;color:var(--txs)" data-i18n="buildProgress">構築進捗</span>
+            <span style="font-size:.72rem;color:var(--ac)" id="pr-pct">0%</span>
+          </div>
+          <div class="prbar"><div class="prbf" id="pr-bar" style="width:0%"></div></div>
+        </div>
+
+        <div class="sh" data-i18n="modules">構築モジュール</div>
+        <div class="mg">
+          <div class="mc" id="mod-phoneme" onclick="openEditor('phoneme')"><div class="mi">🎵</div><div class="mt" data-i18n="phonology">音韻システム</div><div class="ms" id="mod-phoneme-s" data-i18n="phonemeDesc">子音・母音・音節構造</div></div>
+          <div class="mc" id="mod-vocab" onclick="openVocabEditor()"><div class="mi">📖</div><div class="mt" data-i18n="vocabulary">語彙・辞書</div><div class="ms" id="mod-vocab-s" data-i18n="vocabDesc">単語を追加・管理</div></div>
+          <div class="mc" id="mod-grammar" onclick="openEditor('grammar')"><div class="mi">📐</div><div class="mt" data-i18n="grammar">文法システム</div><div class="ms" data-i18n="grammarDesc">語順・時制・格</div></div>
+          <div class="mc" id="mod-corpus" onclick="openEditor('corpus')"><div class="mi">📝</div><div class="mt" data-i18n="corpusTitle">例文集</div><div class="ms" id="mod-corpus-s" data-i18n="corpusDesc">文章を記録する</div></div>
+          <div class="mc" id="mod-script" onclick="openEditor('script')"><div class="mi">✍️</div><div class="mt" data-i18n="script">文字体系</div><div class="ms" data-i18n="scriptDesc">文字を登録・変換する</div></div>
+          <div class="mc" id="mod-vibe" onclick="openEditor('vibe')"><div class="mi">🌌</div><div class="mt" data-i18n="vibe">世界観・イメージ</div><div class="ms" data-i18n="vibeDesc">言語のムードを設定</div></div>
+        </div>
+
+        <!-- ROADMAP -->
+        <div class="sh" data-i18n="roadmap">ロードマップ</div>
+        <div class="total-pts">
+          <div style="font-size:1.5rem">🏆</div>
+          <div>
+            <div class="total-pts-num" id="total-pts-num">0 pts</div>
+            <div style="font-size:.68rem;color:var(--txs)" data-i18n="earnedPts">獲得ポイント</div>
+          </div>
+          <button class="btn btn-xs btn-pur" style="margin-left:auto" onclick="openAchModal()"><span data-i18n="viewAll">すべて見る</span></button>
+        </div>
+        <!-- roadmap-list は openAchModal に集約済み -->
+
+        <div class="page-footer">
+          <div class="footer-brand">LINGUA</div>
+          <div class="footer-links">
+            <a onclick="goTo('tokushoho')" data-i18n="tokushoho">特定商取引法に基づく表記</a>
+            <a onclick="goTo('privacy')" data-i18n="privacy">プライバシーポリシー</a>
+            <a onclick="goTo('contact')" data-i18n="contact">お問い合わせ</a>
+            <a onclick="goTo('terms')" data-i18n="terms">利用規約</a>
+          </div>
+          <div class="footer-copy">© 2025 Lingua. All rights reserved.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VOCAB PAGE -->
+    <section id="page-vocab" class="page">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn btn-gh btn-sm pc-hide" onclick="goTo('dashboard')" data-i18n="back">← ホーム</button>
+            <div><div class="ptitle" id="vocab-page-title" data-i18n="vocabPageTitle">語彙・辞書</div><div class="psub" data-i18n="vocabPageDesc">あなたの言語の言葉たち</div></div>
+          </div>
+        </div>
+
+        <!-- タブ：追加 / 一覧 -->
+        <div class="tabbar" style="margin-bottom:0">
+          <button class="tabbtn active" id="vtab-add-btn" onclick="switchVocabTab('add',this)">${t('addWord')}</button>
+          <button class="tabbtn" id="vtab-list-btn" onclick="switchVocabTab('list',this)">📋 <span data-i18n="listTab">一覧</span> (<span id="vtab-count">0</span>)</button>
+        </div>
+
+        <!-- 追加パネル -->
+        <div id="vtab-add" class="tabpn active" style="padding-top:16px">
+          <div class="vocab-add-grid">
+            <div class="field-block"><label class="fl">${t('wordForm')}</label><input type="text" class="inp" id="vc-word" placeholder="例：aelindra" autocomplete="off" spellcheck="false"></div>
+            <div class="field-block"><label class="fl">${t('meaningLabel')}</label><input type="text" class="inp" id="vc-mean" placeholder="${t('meaningPh')}"></div>
+            <div class="field-block"><label class="fl">読み方（カナ） <span style="color:var(--rs)">*</span></label><input type="text" class="inp" id="vc-read" placeholder="例：エリンドラ"></div>
+            <div class="field-block"><label class="fl">${t('ipaLabel')}</label><input type="text" class="inp" id="vc-ipa" placeholder="例：/ˈɛlɪndɾa/" spellcheck="false"></div>
+            <div class="field-block"><label class="fl">${t('posLabel')}</label><select class="inp" id="vc-pos"><option><option>動詞</option><option>形容詞</option><option>副詞</option><option>代名詞</option><option>助詞</option><option>接続詞</option><option>感動詞</option><option>前置詞</option><option>その他</option></select></div>
+            <div class="field-block"><label class="fl">${t('tagsLabel')}</label><input type="text" class="inp" id="vc-tags" placeholder="例：nature spirit"></div>
+          </div>
+          <div class="field-block"><label class="fl">${t('memoNote')}</label><input type="text" class="inp" id="vc-note" placeholder="例：古エルフ語の aelin (星) から"></div>
+          <button class="btn btn-p btn-bl" onclick="addWord()" style="margin-top:4px">＋ 単語を追加</button>
+          <div id="vc-recent" style="margin-top:20px"></div>
+        </div>
+
+        <!-- 一覧パネル -->
+        <div id="vtab-list" class="tabpn" style="padding-top:16px">
+          <input class="inp" id="vocab-srch" placeholder="🔍 単語・意味を検索…" oninput="renderVocab()" style="margin-bottom:10px">
+          <div class="pos-fb" id="pos-fb"><button class="pos-fbtn act" onclick="setPF('all',this)" data-i18n="all">すべて</button></div>
+          <div id="vocab-list"></div>
+        </div>
+
+        <div class="page-footer">
+          <div class="footer-links"><a onclick="goTo('tokushoho')" data-i18n="tokushoho">特定商取引法に基づく表記</a><a onclick="goTo('privacy')" data-i18n="privacy">プライバシーポリシー</a><a onclick="goTo('contact')" data-i18n="contact">お問い合わせ</a><a onclick="goTo('terms')" data-i18n="terms">利用規約</a></div>
+          <div class="footer-copy">© 2025 Lingua</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI CHAT -->
+    <section id="page-aichat" class="page">
+      <div class="cw">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(10,10,14,.8)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn btn-gh btn-xs pc-hide" onclick="goTo('dashboard')" data-i18n="back">← ホーム</button>
+            <div><div style="font-size:.88rem;font-weight:600">🤖 AI<span data-i18n="aiAdvisor">言語アドバイザー</span></div><div id="ai-lang-lbl" style="font-size:.7rem;color:var(--txs)"></div></div>
+          </div>
+          <div id="ai-lim" style="font-size:.7rem;color:var(--txm)"></div>
+        </div>
+        <div class="csug" id="csug"></div>
+        <div class="cms" id="chat-msgs"></div>
+        <div class="cir">
+          <input class="inp" id="chat-inp" placeholder="メッセージを入力…" style="flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}">
+          <button class="btn btn-p btn-sm" onclick="sendChat()" data-i18n="send">送信</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="page-library" class="page">
+      <div class="pi">
+        <div class="ptitle">🌿 <span data-i18n="library">言語ライブラリ</span></div>
+        <div class="psub" data-i18n="libraryDesc">世界のコンランガーが作った言語を眺めよう</div>
+        <input class="inp" id="lib-srch" placeholder="🔍 言語名・ジャンルで検索…" oninput="renderLib(this.value)" style="margin-bottom:14px">
+        <div id="lib-grid" style="display:grid;gap:10px"></div>
+        <div class="page-footer">
+          <div class="footer-links"><a onclick="goTo('tokushoho')" data-i18n="tokushoho">特定商取引法に基づく表記</a><a onclick="goTo('privacy')" data-i18n="privacy">プライバシーポリシー</a><a onclick="goTo('contact')" data-i18n="contact">お問い合わせ</a><a onclick="goTo('terms')" data-i18n="terms">利用規約</a></div>
+          <div class="footer-copy">© 2025 Lingua</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEMO -->
+    <section id="page-memo" class="page">
+      <div class="pi">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn btn-gh btn-sm pc-hide" onclick="goTo('dashboard')" data-i18n="back">← ホーム</button>
+            <div><div class="ptitle" data-i18n="memo">メモ</div><div class="psub" data-i18n="memoDesc">アイデア・メモを記録</div></div>
+          </div>
+          <button class="btn btn-p" onclick="openMemoNew()">＋ <span data-i18n="new">新規</span></button>
+        </div>
+        <div id="memo-list"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS (was Profile) -->
+    <section id="page-settings" class="page">
+      <div class="prof-wrap">
+        <div style="margin-bottom:20px">
+          <div class="ptitle" data-i18n="settings">設定</div>
+          <div class="psub" data-i18n="settingsDesc">プロフィール・アカウント管理</div>
+        </div>
+
+        <!-- Viola Profile (表示名・自己紹介の編集) -->
+        <div class="settings-section">
+          <div class="settings-title">Viola Profile</div>
+          <div class="card" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+              <div class="p-avlg" id="p-avlg" onclick="triggerAv()"><span id="p-av-init">✦</span></div>
+              <div>
+                <div style="font-size:.78rem;font-weight:600;color:var(--tx)" id="pf-name-disp">-</div>
+                <div style="font-size:.68rem;color:var(--txm)" data-i18n="tapToChange">タップして画像を変更</div>
+              </div>
+              <div id="av-prog-wrap" style="width:80px;height:3px;background:var(--sf3);border-radius:2px;display:none;overflow:hidden;margin-left:auto"><div id="av-prog-bar" style="height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .3s;border-radius:2px"></div></div>
+              <input type="file" id="av-file" accept="image/*" style="display:none" onchange="handleAvFile(this)">
+            </div>
+            <div class="field-block"><label class="fl" data-i18n="displayName">表示名</label><input type="text" class="inp" id="pf-name" placeholder="例：Aelindra" maxlength="40"></div>
+            <div class="field-block"><label class="fl" data-i18n="bio">自己紹介</label><textarea class="inp inp-ta" id="pf-bio" placeholder="例：ファンタジー世界のエルフ言語を制作中…" maxlength="200" oninput="document.getElementById('bio-cnt').textContent=this.value.length"></textarea><div style="text-align:right;font-size:.6rem;color:var(--txm)"><span id="bio-cnt">0</span>/200</div></div>
+            <div class="field-block" style="margin-bottom:0"><label class="fl" data-i18n="email">メールアドレス</label><input type="text" class="inp" id="pf-email" disabled style="opacity:.45;cursor:not-allowed"></div>
+          </div>
+          <button class="btn btn-p btn-bl" onclick="saveProfile()" style="margin-bottom:8px"><span id="pf-save-lbl" data-i18n="saveProfile">✓ 保存する</span></button>
+        </div>
+
+        <!-- Account (プラン管理・ログアウト) -->
+        <div class="settings-section">
+          <div class="settings-title" data-i18n="account">Account</div>
+          <div class="card">
+            <div class="field-block" style="margin-bottom:12px">
+              <label class="fl" data-i18n="currentPlan">現在のプラン</label>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span id="settings-plan-label" style="font-size:.84rem;font-weight:600">FREE</span>
+                <button class="btn btn-sm btn-g" onclick="openUpgrade()" data-i18n="upgrade">💎 アップグレード</button>
+              </div>
+            </div>
+            <div class="field-block" style="margin-bottom:12px">
+              <label class="fl" data-i18n="violaConnect">Viola 連携</label>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:.78rem;color:var(--txs)" data-i18n="violaConnectDesc">コンランガーSNSと連携してシェア</span>
+                <button class="btn btn-sm btn-pur" onclick="connectViola()" data-i18n="violaConnectBtn">🌸 Violaと連携</button>
+              </div>
+            </div>
+            <button class="btn btn-r btn-bl" onclick="doLogout()" style="margin-bottom:8px">🚪 <span data-i18n="logout">ログアウト</span></button>
+            <button class="btn btn-bl" style="border-color:var(--rsb);color:var(--rs);font-size:.74rem;opacity:.7" onclick="deleteAccount()" data-i18n="deleteAccount">⚠️ アカウントを削除する</button>
+          </div>
+        </div>
+
+        <div style="font-size:.65rem;color:var(--txm);text-align:center;margin-top:8px">Lingua v1.01 · © 2025</div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="page-faq" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back">← ホーム</button>
+        <div class="ptitle" data-i18n="faqTitle">よくある質問</div>
+        <div class="psub">FAQ</div>
+        <div id="faq-list"></div>
+        <div class="page-footer">
+          <div class="footer-brand">LINGUA</div>
+          <div class="footer-links">
+            <a onclick="goTo('tokushoho')" data-i18n="tokushoho">特定商取引法に基づく表記</a>
+            <a onclick="goTo('privacy')" data-i18n="privacy">プライバシーポリシー</a>
+            <a onclick="goTo('contact')" data-i18n="contact">お問い合わせ</a>
+            <a onclick="goTo('terms')" data-i18n="terms">利用規約</a>
+          </div>
+          <div class="footer-copy">© 2025 Lingua. All rights reserved.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="page-contact" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back">← ホーム</button>
+        <div class="ptitle">💬 <span data-i18n="contactTitle">お問い合わせ</span></div>
+        <div class="psub" data-i18n="contactDesc">ご質問・ご要望・バグ報告</div>
+        <div class="card">
+          <div class="field-block"><label class="fl" data-i18n="type">種別</label><select class="inp" id="ct-type"></select></div>
+          <div class="field-block"><label class="fl" data-i18n="contactEmailLabel">メールアドレス（返信先・必須）</label><input type="email" class="inp" id="ct-email" data-i18n-placeholder="contactEmailPh" placeholder="example@email.com" required></div>
+          <div class="field-block"><label class="fl" data-i18n="content">内容</label><textarea class="inp inp-ta" id="ct-msg" data-i18n-placeholder="contactMsgPh" placeholder="詳細を入力してください…" style="min-height:100px"></textarea></div>
+          <button class="btn btn-p btn-bl" onclick="submitContact()" data-i18n="send">送信する</button>
+        </div>
+        <div class="page-footer">
+          <div class="footer-links"><a onclick="goTo('tokushoho')" data-i18n="tokushoho">特定商取引法に基づく表記</a><a onclick="goTo('privacy')" data-i18n="privacy">プライバシーポリシー</a><a onclick="goTo('contact')" data-i18n="contact">お問い合わせ</a><a onclick="goTo('terms')" data-i18n="terms">利用規約</a></div>
+          <div class="footer-copy">© 2025 Lingua</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKUSHOHO -->
+    <section id="page-tokushoho" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back">← ホーム</button>
+        <div class="ptitle" data-i18n="tokushohoTitle">特定商取引法に基づく表示</div>
+        <div class="psub">Specified Commercial Transaction Act</div>
+        <div class="card" style="overflow-x:auto" id="tokushoho-body"></div>
+        <div class="page-footer"><div class="footer-copy">© 2025 Lingua</div></div>
+      </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section id="page-privacy" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back">← ホーム</button>
+        <div class="ptitle" data-i18n="privacyTitle">プライバシーポリシー</div>
+        <div class="psub">Privacy Policy</div>
+        <div class="card" id="privacy-body"></div>
+        <div class="page-footer"><div class="footer-copy">© 2025 Lingua. All rights reserved.</div></div>
+      </div>
+    </section>
+
+    <!-- TERMS -->
+    <section id="page-terms" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back">← ホーム</button>
+        <div class="ptitle" data-i18n="terms">利用規約</div>
+        <div class="psub">Terms of Service</div>
+        <div class="card" id="terms-body"></div>
+        <div class="page-footer"><div class="footer-copy">© 2025 Lingua. All rights reserved.</div></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav">
+    <div class="bnav-in">
+      <button class="bnav-btn active" id="bn-dash" onclick="goTo('dashboard');setBN('bn-dash')"><div class="bni">🏠</div><span data-i18n="home">ホーム</span></button>
+      <button class="bnav-btn" id="bn-vocab" onclick="goTo('vocab');setBN('bn-vocab')"><div class="bni">📖</div><span data-i18n="vocab">語彙</span></button>
+      <button class="bnav-btn" id="bn-ai" onclick="goTo('aichat');setBN('bn-ai')"><div class="bni">🤖</div><span data-i18n="ai">AI</span></button>
+      <button class="bnav-btn" id="bn-memo" onclick="goTo('memo');setBN('bn-memo')"><div class="bni">📝</div><span data-i18n="memo">メモ</span></button>
+      <button class="bnav-btn" id="bn-settings" onclick="goTo('settings');setBN('bn-settings')"><div class="bni">⚙️</div><span data-i18n="settings">設定</span></button>
+    </div>
+  </nav>
+</div>
+
+<!-- Editor Overlay -->
+<div id="ed-ov" class="eo">
+  <div class="et">
+    <button class="btn btn-gh btn-sm" onclick="closeEditor()">✕</button>
+    <div style="flex:1"><div class="etr" id="ed-title">エディタ</div></div>
+    <div id="ed-actions"></div>
+  </div>
+  <div class="eb" id="ed-body"></div>
+</div>
+
+<!-- Memo Overlay -->
+<div id="memo-ov" class="memo-ov">
+  <div class="et">
+    <button class="btn btn-gh btn-sm" onclick="closeMemoEd()">✕</button>
+    <input class="inp" id="memo-title-inp" placeholder="タイトル" style="flex:1;border:none;background:transparent;font-size:.95rem;font-weight:600;padding:4px 8px;color:var(--tx);outline:none">
+    <button class="btn btn-r btn-xs" id="memo-del-btn" onclick="delMemo()" style="display:none">'+t('deleted')+'</button>
+    <button class="btn btn-p btn-sm" onclick="saveMemo()" data-i18n="save">保存</button>
+  </div>
+  <textarea id="memo-body-inp" placeholder="メモを入力…" style="flex:1;width:100%;border:none;background:transparent;padding:16px;font-size:.88rem;line-height:1.7;resize:none;outline:none;color:var(--tx);-webkit-overflow-scrolling:touch;font-family:inherit"></textarea>
+</div>
+
+<!-- Login Modal -->
+<div id="login-modal" class="modal-bg" onclick="if(event.target===this)closeLogin()">
+  <div class="lsheet">
+    <div class="ltit">✦ LINGUA</div>
+    <div class="lsub" data-i18n="loginSub">ログインしてクラウド同期・全機能を使おう</div>
+    <button class="btn btn-bl" style="border-color:var(--brh);gap:10px;margin-bottom:8px" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+      Google<span data-i18n="loginWith">でログイン</span>
+    </button>
+    <div class="ldiv" data-i18n="or">または</div>
+    <div class="field-block"><input type="email" class="inp" id="lg-email" placeholder="メールアドレス"></div>
+    <div class="field-block"><input type="password" class="inp" id="lg-pass" placeholder="パスワード" onkeydown="if(event.key==='Enter')loginEmail()"></div>
+    <button class="btn btn-p btn-bl" onclick="loginEmail()" style="margin-bottom:6px" data-i18n="login">ログイン</button>
+    <div class="lfooter"><span data-i18n="noAccount">アカウントがない場合は</span> <a onclick="showSignup()" data-i18n="signUp">新規登録</a></div>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signup-modal" class="modal-bg" onclick="if(event.target===this)closeSignup()" style="display:none">
+  <div class="lsheet">
+    <div class="ltit">✦ <span data-i18n="signUp">新規登録</span></div>
+    <div class="lsub" data-i18n="signUpSub">メールアドレスで新しいアカウントを作成</div>
+    <div class="field-block"><input type="text" class="inp" id="sg-name" placeholder="表示名"></div>
+    <div class="field-block"><input type="email" class="inp" id="sg-email" placeholder="メールアドレス"></div>
+    <div class="field-block"><input type="password" class="inp" id="sg-pass" placeholder="パスワード（6文字以上）" onkeydown="if(event.key==='Enter')signupEmail()"></div>
+    <button class="btn btn-p btn-bl" onclick="signupEmail()" data-i18n="createAccount">アカウント作成</button>
+    <div class="lfooter"><span data-i18n="haveAccount">すでにアカウントをお持ちの方は</span> <a onclick="closeSignup();openLogin()" data-i18n="login">ログイン</a></div>
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div id="upgrade-modal" class="modal-bg" onclick="if(event.target===this)closeUpgrade()">
+  <div class="msheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--gd)">💎 <span data-i18n="upgradePlan">プランをアップグレード</span></div>
+      <button class="btn btn-gh btn-xs" onclick="closeUpgrade()">✕</button>
+    </div>
+    <div class="pcrd" style="opacity:.65">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px"><div class="ppr" data-i18n="free">無料</div><div style="font-size:.72rem;color:var(--txs)">Free</div></div>
+      <div><div class="pfeat" data-i18n="free1">1言語まで</div><div class="pfeat" data-i18n="free2">AI会話10回/日</div><div class="pfeat" data-i18n="free3">ローカル保存のみ</div></div>
+    </div>
+    <div class="pcrd" onclick="doCheckout('lite')">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px"><div class="ppr">$9.9</div><div style="font-size:.72rem;color:var(--txs)">/月 (Lite)</div><div style="margin-left:auto;font-size:.63rem;padding:2px 8px;border-radius:4px;background:var(--acd);color:var(--ac);border:1px solid var(--acb)">14日無料</div></div>
+      <div><div class="pfeat" data-i18n="lite1">無制限の言語</div><div class="pfeat" data-i18n="lite2">AI会話50回/日</div><div class="pfeat" data-i18n="lite3">クラウド同期</div><div class="pfeat">Violaプロフィール</div></div>
+    </div>
+    <div class="pcrd rec" onclick="doCheckout('pro')">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px"><div class="ppr">$19.9</div><div style="font-size:.72rem;color:var(--txs)">/月 (Pro)</div><div style="margin-left:auto;font-size:.63rem;padding:2px 8px;border-radius:4px;background:var(--gdd);color:var(--gd);border:1px solid var(--gdb);font-weight:700" data-i18n="recommended">おすすめ</div></div>
+      <div><div class="pfeat" data-i18n="pro1">すべての機能を無制限</div><div class="pfeat" data-i18n="pro2">AI会話無制限</div><div class="pfeat" data-i18n="pro3">優先サポート</div><div class="pfeat">Viola公開バッジ</div></div>
+    </div>
+    <div style="font-size:.68rem;color:var(--txm);text-align:center;margin-top:10px" data-i18n="stripeNote">いつでもキャンセル可能 · Stripe安全決済</div>
+  </div>
+</div>
+
+<!-- Vis Popup -->
+<div id="vis-pop" class="vispop" onclick="if(event.target===this)closeVisPop()">
+  <div class="vbox">
+    <div style="font-size:.88rem;font-weight:700;margin-bottom:14px">🌍 <span data-i18n="publicSettings">公開設定</span></div>
+    <div class="vopt" id="vopt-private" onclick="setVis('private')"><div style="font-size:1.2rem">🔒</div><div><div style="font-size:.86rem;font-weight:600" data-i18n="private">非公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="privateDesc">自分だけが見られます</div></div></div>
+    <div class="vopt" id="vopt-unlisted" onclick="setVis('unlisted')"><div style="font-size:1.2rem">🔗</div><div><div style="font-size:.86rem;font-weight:600" data-i18n="unlisted">限定公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="unlistedDesc">URLを知っている人だけ</div></div></div>
+    <div class="vopt" id="vopt-public" onclick="setVis('public')"><div style="font-size:1.2rem">🌍</div><div><div style="font-size:.86rem;font-weight:600" data-i18n="public">公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="publicDesc">ライブラリに掲載される</div></div></div>
+  </div>
+</div>
+
+<!-- Lang Name Modal -->
+<div id="lname-modal" class="modal-bg" onclick="if(event.target===this)closeLNE()">
+  <div class="msheet" style="border-radius:16px;padding:24px;max-height:50vh">
+    <div style="font-size:.92rem;font-weight:700;margin-bottom:14px">✏️ <span data-i18n="editLangName">言語名を変更</span></div>
+    <div class="field-block"><label class="fl" data-i18n="conlangName">言語名（コンラング名）</label><input type="text" class="inp" id="lname-inp" placeholder="例：シルヴァリ語" maxlength="40"></div>
+    <div class="field-block"><label class="fl" data-i18n="nativeName">自然言語名（任意）</label><input type="text" class="inp" id="lnative-inp" placeholder="例：Silvari" maxlength="40"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-gh btn-sm" onclick="closeLNE()" data-i18n="cancel">キャンセル</button>
+      <button class="btn btn-p" onclick="saveLN()" data-i18n="save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lang Picker Modal -->
+<div id="lang-picker-modal" class="modal-bg" onclick="if(event.target===this)closeLangPicker()">
+  <div class="msheet" style="border-radius:16px;padding:24px;max-height:50vh">
+    <div style="font-size:.92rem;font-weight:700;margin-bottom:16px" data-i18n="selectLang">表示言語を選択</div>
+    <div class="lang-pills" style="flex-direction:column;gap:8px">
+      <button class="btn btn-bl" onclick="setLang('jp');closeLangPicker()" style="justify-content:flex-start;gap:12px">🇯🇵 <span>日本語</span></button>
+      <button class="btn btn-bl" onclick="setLang('en');closeLangPicker()" style="justify-content:flex-start;gap:12px">🇺🇸 <span>English</span></button>
+      <button class="btn btn-bl" onclick="setLang('zh');closeLangPicker()" style="justify-content:flex-start;gap:12px">🇨🇳 <span>中文</span></button>
+      <button class="btn btn-bl" onclick="setLang('es');closeLangPicker()" style="justify-content:flex-start;gap:12px">🇪🇸 <span>Español</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Modal -->
+<div id="ach-modal" class="ach-modal" onclick="if(event.target===this)closeAchModal()">
+  <div class="ach-box">
+    <div class="ach-icon" id="ach-icon">🏆</div>
+    <div class="ach-title" id="ach-title">アチーブメント</div>
+    <div class="ach-desc" id="ach-desc">説明</div>
+    <div class="ach-pts-badge" id="ach-pts">0 pts</div>
+    <div style="margin-top:8px"><button class="btn btn-gh btn-sm" onclick="closeAchModal()" data-i18n="close">閉じる</button></div>
+  </div>
+</div>
+
+<div class="autosave" id="autosave-el"></div>
+
+<!-- Firebase -->
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import{getAuth,onAuthStateChanged,signInWithRedirect,getRedirectResult,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,GoogleAuthProvider}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import{getFirestore,doc,setDoc,getDoc,addDoc,collection}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+const FB_CFG={apiKey:"AIzaSyBsrxUHZCsfMJvlQ-rgLemmw8anvkp7tGw",authDomain:"lingua-17cd3.firebaseapp.com",projectId:"lingua-17cd3",storageBucket:"lingua-17cd3.appspot.com",messagingSenderId:"123456789",appId:"1:123456789:web:abcdef"};
+const app=initializeApp(FB_CFG);
+const auth=getAuth(app);const db=getFirestore(app);
+window.FB={auth,db,onAuthStateChanged,signInWithRedirect,getRedirectResult,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,GoogleAuthProvider,doc,setDoc,getDoc,addDoc,collection};
+console.log('✅ Firebase ready');
+</script>
+
+<script>
+// =============================================
+// LINGUA v2 — Main Script
+// =============================================
+const SKEY='lingua_v2';const AKEY='lingua_auth';const MDBNAME='LinguaMemos';const MSTORE='memos';
+const DS={langName:'',langNative:'',phoneme:{consonants:[],vowels:[]},syllable:{onset:[],nucleus:[],coda:[]},dictionary:[],grammar:{order:'',tense:'',cases:[],notes:'',chapters:{},topicProm:'',number:'',aspect:'',mood:'',adjPos:'',adjAgree:''},corpus:[],sentences:[],script:{romanization:'',rules:'',worldScript:'',charMap:[]},vibe:{genre:'',mood:'',region:'',notes:''},visibility:'private',done:{}};
+let S=JSON.parse(JSON.stringify(DS));
+let _au=null,_plan='free',_isPro=false,_ced=null,_pf='all',_meid=null,_aihist=[],_aiCnt=0,_aiDate='',_dsTimer=null,_pdata={},_mdb=null,_lang='jp',_grChap='greet';
+
+// ---- i18n ----
+const i18n={
+  jp:{home:'ホーム',back:'← ホーム',vocab:'語彙',vocabPageTitle:'語彙・辞書',memo:'メモ',ai:'AI',settings:'設定',phonology:'音韻システム',grammar:'文法システム',corpusTitle:'例文集',script:'文字体系',vibe:'世界観',library:'ライブラリ',newLang:'新しい言語',buildProgress:'構築進捗',modules:'構築モジュール',recentVocab:'最近の語彙',roadmap:'ロードマップ',earnedPts:'獲得ポイント',viewAll:'すべて見る',todaySentence:'今日の1文',writeSentence:'作文する',phonemes:'音素',login:'ログイン',logout:'ログアウト',save:'保存',cancel:'キャンセル',close:'閉じる',send:'送信する',free:'無料',recommended:'おすすめ',or:'または',faq:'よくある質問',contact:'お問い合わせ',privacy:'プライバシーポリシー',tokushoho:'特定商取引法に基づく表記',guestMode:'ゲストモードで利用中',loginPrompt:'ログインでクラウド同期・全機能が使えます',upgradeBanner:'Proにアップグレード',upgradeDesc:'クラウド同期・無制限AI・すべての機能',details:'詳細',langName:'言語名',addWord:'単語追加',all:'すべて',seeAll:'すべて見る →',appLanguage:'アプリ言語',profileSection:'プロフィール',displayName:'表示名',bio:'自己紹介',email:'メールアドレス',tapToChange:'タップして画像を変更',saveProfile:'✓ 保存する',violaDesc:'Linguaと連携すると、Violaで他のコンランガーとつながり、あなたの言語をシェアできます。',violaTogDesc:'ONにするとViolaでログインが許可されます',connectedLang:'連携済み言語',publicSettings:'公開設定',visibility:'公開設定',account:'アカウント',legal:'法的情報',settingsDesc:'言語・アカウント・SNS連携',private:'非公開',privateDesc:'自分だけが見られます',unlisted:'限定公開',unlistedDesc:'URLを知っている人だけ',public:'公開',publicDesc:'ライブラリに掲載される',loginSub:'ログインしてクラウド同期・全機能を使おう',loginWith:'でログイン',noAccount:'アカウントがない場合は',signUp:'新規登録',signUpSub:'メールアドレスで新しいアカウントを作成',haveAccount:'すでにアカウントをお持ちの方は',createAccount:'アカウント作成',upgradePlan:'プランをアップグレード',stripeNote:'いつでもキャンセル可能 · Stripe安全決済',faqTitle:'よくある質問',contactTitle:'お問い合わせ',contactDesc:'ご質問・ご要望・バグ報告',type:'種別',content:'内容',contactEmailLabel:'メールアドレス（返信先・必須）',contactEmailPh:'example@email.com',contactMsgPh:'詳細を入力してください…',contactEmailRequired:'メールアドレスを入力してください',contactEmailInvalid:'有効なメールアドレスを入力してください',contactMsgRequired:'内容を入力してください',contactSending:'送信中…',contactSuccess:'お問い合わせを受け付けました。ご返信をお待ちください。',contactFail:'送信に失敗しました。しばらく後にお試しください。',todayScene:'今日のシーン',sceneLabel:'🎬 今日のシーン',sceneHint:'このシーンをきっかけに、必要な単語・文法を考えてみよう',scenePlaceholder:'まずこのシーンに必要な単語を考えてみよう…',sceneJpLabel:'日本語訳（任意）',sceneJpPh:'どんな意味の一文？',sceneSavedCount:'これまでの作文',sceneGenerating:'新しいシーンを生成中…',sceneGenerateFail:'生成に失敗しました。しばらく後にお試しください。',sceneNewBtn:'🎲 別のシーンを生成',privacyTitle:'プライバシーポリシー',tokushohoTitle:'特定商取引法に基づく表示',editLangName:'言語名を変更',conlangName:'言語名（コンラング名）',nativeName:'自然言語名（任意）',selectLang:'表示言語を選択',aiAdvisor:'言語アドバイザー',new:'新規',memoDesc:'アイデア・メモを記録',vocabPageDesc:'あなたの言語の言葉たち',libraryDesc:'世界のコンランガーが作った言語を眺めよう',phonemeDesc:'子音・母音・音節構造',vocabDesc:'単語を追加・管理',grammarDesc:'語順・時制・格',corpusDesc:'文章を記録する',scriptDesc:'文字を登録・変換する',vibeDesc:'言語のムードを設定',dailyPlaceholder:'今日の1文を書いてみよう',free1:'1言語まで',free2:'AI会話10回/日',free3:'ローカル保存のみ',lite1:'無制限の言語',lite2:'AI会話50回/日',lite3:'クラウド同期',pro1:'すべての機能を無制限',pro2:'AI会話無制限',pro3:'優先サポート',terms:'利用規約',currentPlan:'現在のプラン',upgrade:'💎 アップグレード',violaConnect:'Viola 連携',violaConnectDesc:'コンランガーSNSと連携してシェア',violaConnectBtn:'🌸 Violaと連携',violaShare:'🌸 Violaで共有',violaShareCopied:'Violaシェア用テキストをコピーしました 🌸',violaComingSoon:'Viola連携機能は近日公開予定です 🌸',deleteAccount:'⚠️ アカウントを削除する',deleteAccountConfirm1:'⚠️ アカウントを削除しますか？\n\nすべてのクラウドデータが完全に削除されます。この操作は取り消せません。',deleteAccountConfirm2:'最終確認：本当に削除しますか？',deleteAccountDone:'アカウントを削除しました',deleteAccountFail:'削除に失敗しました。サポートにお問い合わせください。',loginRequired:'先にログインしてください',copyFailed:'コピーに失敗しました',displayNameRequired:'表示名を入力してください',saving:'保存中…',saved:'保存しました ✅',savedLocally:'ローカルに保存しました',wordFormRequired:'語形と意味は必須です',readingRequired:'読み方（カナ）は必須です',ipaRequired:'発音記号（IPA）は必須です',wordAdded:'を追加しました',firebaseError:'Firebase未接続',emailPasswordRequired:'メールとパスワードを入力してください',loginFailed:'ログイン失敗',allFieldsRequired:'すべての項目を入力してください',passwordTooShort:'パスワードは6文字以上',accountCreated:'アカウント作成完了 ✅',signupFailed:'登録失敗',loggedOut:'ログアウトしました',loggedIn:'ログインしました ✅',dailyRequired:'作文を入力してください',dailySaved:'作文を保存しました ✅',corpusRequired:'コンラング文は必須です',corpusAdded:'例文を追加しました',deleted:'削除しました',imageTooLarge:'画像は3MB以下にしてください',avatarUpdated:'アイコンを更新しました',memoDeleteConfirm:'このメモを削除しますか？',todayScene:'今日のシーン',shareTextSuffix:'Lingua で制作中の架空言語です',vocabCount:'語彙数',wordUnit:'語',corpusUnit:'例文',phonemeUnit:'音素',aiLimitReached:'今日のAI使用回数の上限に達しました。Proプランなら無制限です。',aiThinking:'考え中…',aiError:'エラーが発生しました。もう一度お試しください。',yourLang:'✓ あなたの言語',noResults:'検索結果がありません',noWords:'まだ単語がありません',noFilter:'フィルター結果なし',addFirstWord:'＋ 最初の単語を追加',noMemos:'メモがありません',createFirstMemo:'＋ 最初のメモを作成',untitled:'無題',notSet:'未設定',ownLangDesc:'自作の言語',you:'あなた',building:'構築中',checkoutError:'決済リンクが見つかりません',saveFailed:'保存に失敗しました',dbError:'IndexedDB が使用できません',memoSaved:'メモを保存しました',autoSaved:'✓ 自動保存',cloudRestored:'☁️ クラウドから復元',langNameSaved:'言語名を保存しました',googleLoginFailed:'Googleログイン失敗',vocabulary:'語彙・辞書',privateLabel:'🔒 非公開',unlistedLabel:'🔗 限定公開',publicLabel:'🌍 公開',memoNoTitle:'無題',consonants:'子音',vowels:'母音',selectedTap:'選択済み（タップで音を聞く）',addPhonemesFirst:'先に音素を選択してください',wordForm:'コンラング語形 *',reading:'読み方（カナ） *',ipaLabel:'発音記号（IPA） *',posLabel:'品詞',memoNote:'メモ（語源・用例など）',tagsLabel:'タグ（スペース区切り）',add:'追加',listTab:'一覧',conlangSentence:'コンラング文 *',readingOptional:'読み方（任意）',translationLabel:'日本語訳 *',addCorpusBtn:'＋ 例文を追加',genre:'ジャンル',mood:'言語のムード',region:'舞台・地域のイメージ',vibeNotes:'メモ・インスピレーション',grammarRuleLabel:'ルール・語形一覧',prevChap:'前',nextChap:'次',syllOnset:'頭子音 (Onset)',syllNucleus:'核母音 (Nucleus)',syllCoda:'末子音 (Coda)',violaActiveMsg:'✅ <strong>Violaと連携中</strong> — Violaを開くと自動ログインされます。',violaInactiveMsg:'⭕ <strong>未連携</strong> — Violaを開くとLinguaでの設定を促すメッセージが表示されます。',aiSug1:'最初に何をすべき？',aiSug2:'音韻のアドバイスをください',aiSug3:'語彙を増やすコツは？',aiSug4:'文法の決め方を教えて',aiSug5:'言語の世界観はどう決める？',aiGreeting1:'こんにちは！「',aiGreeting2:'」の制作、頑張っていますね！何でも相談してください。',meaningLabel:'日本語訳・意味 *',meaningPh:'例：星の光、星詠みの者',noneSelected:'まだ選択されていません',allWordsInDict:'すべての単語が辞書に登録されています！',unregisteredWords:'未登録の語',comingSoon:'準備中…',unlimited:'無制限',allPhonemesImported:'すでに全音素が登録済みです',phonemesImported:'音素をインポートしました',recentVocab:'最近追加した単語'},
+  en:{home:'Home',back:'← Home',vocab:'Vocab',vocabPageTitle:'Vocabulary',memo:'Notes',ai:'AI',settings:'Settings',phonology:'Phonology',grammar:'Grammar',corpusTitle:'Corpus',script:'Script',vibe:'Vibe',library:'Library',newLang:'New Language',buildProgress:'Build Progress',modules:'Build Modules',recentVocab:'Recent Words',roadmap:'Roadmap',earnedPts:'Points Earned',viewAll:'View All',todaySentence:"Today\'s Scene",writeSentence:'Write',phonemes:'Phonemes',login:'Login',logout:'Logout',save:'Save',cancel:'Cancel',close:'Close',send:'Send',free:'Free',recommended:'Best',or:'or',faq:'FAQ',contact:'Contact',privacy:'Privacy Policy',tokushoho:'Commercial Transactions',guestMode:'Guest Mode',loginPrompt:'Login for cloud sync & full features',upgradeBanner:'Upgrade to Pro',upgradeDesc:'Cloud sync, unlimited AI, all features',details:'Details',langName:'Lang Name',addWord:'Add Word',all:'All',seeAll:'See All →',appLanguage:'App Language',profileSection:'Profile',displayName:'Display Name',bio:'Bio',email:'Email',tapToChange:'Tap to change image',saveProfile:'✓ Save',violaDesc:'Connect with Viola to share your language with other conlangers.',violaTogDesc:'Enable to allow Viola login',connectedLang:'Connected Language',publicSettings:'Visibility',visibility:'Visibility',account:'Account',legal:'Legal',settingsDesc:'Language, Account & SNS',private:'Private',privateDesc:'Only you can see it',unlisted:'Unlisted',unlistedDesc:'Anyone with the link',public:'Public',publicDesc:'Listed in library',loginSub:'Login for cloud sync & full features',loginWith:' Login',noAccount:'No account? ',signUp:'Sign Up',signUpSub:'Create a new account with email',haveAccount:'Already have an account? ',createAccount:'Create Account',upgradePlan:'Upgrade Plan',stripeNote:'Cancel anytime · Secure payment via Stripe',faqTitle:'FAQ',contactTitle:'Contact',contactDesc:'Questions, requests, bug reports',type:'Type',content:'Content',contactEmailLabel:'Email (required for reply)',contactEmailPh:'example@email.com',contactMsgPh:'Please describe in detail…',contactEmailRequired:'Please enter your email address',contactEmailInvalid:'Please enter a valid email address',contactMsgRequired:'Please enter a message',contactSending:'Sending…',contactSuccess:'Your message has been received. We will reply shortly.',contactFail:'Failed to send. Please try again later.',todayScene:"Today\'s Scene",sceneLabel:'🎬 Scene of the Day',sceneHint:'Use this scene as a spark — what words or grammar do you need?',scenePlaceholder:'Think about what words this scene needs…',sceneJpLabel:'Translation (optional)',sceneJpPh:'What does your sentence mean?',sceneSavedCount:'Past sentences',sceneGenerating:'Generating a new scene…',sceneGenerateFail:'Generation failed. Please try again.',sceneNewBtn:'🎲 Generate New Scene',privacyTitle:'Privacy Policy',tokushohoTitle:'Commercial Transactions Act',editLangName:'Edit Language Name',conlangName:'Conlang Name',nativeName:'Natural name (optional)',selectLang:'Select Display Language',aiAdvisor:' Language Advisor',new:'New',memoDesc:'Record ideas & notes',vocabPageDesc:'Words of your language',libraryDesc:'Browse languages by conlangers worldwide',phonemeDesc:'Consonants, vowels, syllable structure',vocabDesc:'Add & manage words',grammarDesc:'Word order, tense, cases',corpusDesc:'Record sentences',scriptDesc:'Register & convert characters',dailyPlaceholder:'Write your sentence for today',vibeDesc:'Set the mood of your language',free1:'1 language',free2:'10 AI chats/day',free3:'Local storage only',lite1:'Unlimited languages',lite2:'50 AI chats/day',lite3:'Cloud sync',pro1:'All features unlimited',pro2:'Unlimited AI chat',pro3:'Priority support',terms:'Terms of Service',currentPlan:'Current Plan',upgrade:'💎 Upgrade',violaConnect:'Viola Connect',violaConnectDesc:'Share with the conlanger community',violaConnectBtn:'🌸 Connect to Viola',violaShare:'🌸 Share on Viola',violaShareCopied:'Share text copied for Viola 🌸',violaComingSoon:'Viola integration coming soon 🌸',deleteAccount:'⚠️ Delete Account',deleteAccountConfirm1:'⚠️ Delete your account?\n\nAll cloud data will be permanently deleted. This cannot be undone.',deleteAccountConfirm2:'Final confirmation: Are you absolutely sure?',deleteAccountDone:'Account deleted',deleteAccountFail:'Deletion failed. Please contact support.',loginRequired:'Please log in first',copyFailed:'Copy failed',displayNameRequired:'Please enter a display name',saving:'Saving…',saved:'Saved ✅',savedLocally:'Saved locally',wordFormRequired:'Word form and meaning are required',readingRequired:'Reading (Kana) is required',ipaRequired:'IPA pronunciation is required',wordAdded:'added',firebaseError:'Firebase not connected',emailPasswordRequired:'Please enter email and password',loginFailed:'Login failed',allFieldsRequired:'Please fill in all fields',passwordTooShort:'Password must be at least 6 characters',accountCreated:'Account created ✅',signupFailed:'Signup failed',loggedOut:'Logged out',loggedIn:'Logged in ✅',dailyRequired:'Please enter your sentence',dailySaved:'Sentence saved ✅',corpusRequired:'Conlang sentence is required',corpusAdded:'Sentence added',deleted:'Deleted',imageTooLarge:'Image must be under 3MB',avatarUpdated:'Avatar updated',memoDeleteConfirm:'Delete this memo?',todayScene:'Today\'s Scene',shareTextSuffix:'conlang in progress on Lingua',vocabCount:'Vocabulary',wordUnit:'words',corpusUnit:'sentences',phonemeUnit:'phonemes',aiLimitReached:'You\'ve reached today\'s AI limit. Upgrade to Pro for unlimited chats.',aiThinking:'Thinking…',aiError:'An error occurred. Please try again.',yourLang:'✓ Your language',noResults:'No results found',noWords:'No words yet',noFilter:'No matches for filter',addFirstWord:'＋ Add first word',noMemos:'No memos yet',createFirstMemo:'＋ Create first memo',untitled:'Untitled',notSet:'Not set',ownLangDesc:'My conlang',you:'You',building:'Building',checkoutError:'Payment link not found',saveFailed:'Save failed',dbError:'IndexedDB unavailable',memoSaved:'Memo saved',autoSaved:'✓ Saved',cloudRestored:'☁️ Restored from cloud',langNameSaved:'Language name saved',googleLoginFailed:'Google login failed',vocabulary:'Vocabulary',privateLabel:'🔒 Private',unlistedLabel:'🔗 Unlisted',publicLabel:'🌍 Public',memoNoTitle:'Untitled',consonants:'Consonants',vowels:'Vowels',selectedTap:'Selected (tap to hear)',addPhonemesFirst:'Please add phonemes first',wordForm:'Conlang word form *',reading:'Reading *',ipaLabel:'IPA pronunciation *',posLabel:'Part of speech',memoNote:'Notes (etymology, usage, etc.)',tagsLabel:'Tags (space-separated)',add:'Add',listTab:'List',conlangSentence:'Conlang sentence *',readingOptional:'Reading (optional)',translationLabel:'Translation *',addCorpusBtn:'＋ Add sentence',genre:'Genre',mood:'Mood',region:'Setting / Region',vibeNotes:'Notes & inspiration',grammarRuleLabel:'Rules & word forms',prevChap:'Prev',nextChap:'Next',syllOnset:'Onset',syllNucleus:'Nucleus',syllCoda:'Coda',violaActiveMsg:'✅ <strong>Connected to Viola</strong> — Auto-login enabled.',violaInactiveMsg:'⭕ <strong>Not connected</strong> — Opening Viola will prompt setup.',aiSug1:'Where should I start?',aiSug2:'Advice on phonology',aiSug3:'How to grow vocabulary?',aiSug4:'How to design grammar?',aiSug5:'How to set the vibe?',aiGreeting1:'Hello! Great work on "',aiGreeting2:'"! Ask me anything.',meaningLabel:'Meaning / Translation *',meaningPh:'e.g. starlight, star-reader',noneSelected:'None selected',allWordsInDict:'All words are registered in the dictionary!',unregisteredWords:'Unregistered words',comingSoon:'Coming soon…',unlimited:'Unlimited',allPhonemesImported:'All phonemes already imported',phonemesImported:'phonemes imported',recentVocab:'Recently added words'},
+  zh:{home:'主页',back:'← 主页',vocab:'词汇',vocabPageTitle:'词汇辞典',memo:'笔记',ai:'AI',settings:'设置',phonology:'音韵系统',grammar:'语法系统',corpusTitle:'例句集',script:'文字体系',vibe:'世界观',library:'语言库',newLang:'新语言',buildProgress:'构建进度',modules:'构建模块',recentVocab:'最近词汇',roadmap:'路线图',earnedPts:'已获积分',viewAll:'查看全部',todaySentence:'今日场景',writeSentence:'写作',phonemes:'音素',login:'登录',logout:'登出',save:'保存',cancel:'取消',close:'关闭',send:'发送',free:'免费',recommended:'推荐',or:'或者',faq:'常见问题',contact:'联系我们',privacy:'隐私政策',tokushoho:'商业交易法',guestMode:'游客模式',loginPrompt:'登录享受云同步和完整功能',upgradeBanner:'升级到Pro',upgradeDesc:'云同步、无限AI、所有功能',details:'详情',langName:'语言名称',addWord:'添加词汇',all:'全部',seeAll:'查看全部 →',appLanguage:'应用语言',profileSection:'个人资料',displayName:'显示名称',bio:'个人简介',email:'电子邮件',tapToChange:'点击更换图片',saveProfile:'✓ 保存',violaDesc:'与Viola连接，与其他人造语者分享您的语言。',violaTogDesc:'开启允许Viola登录',connectedLang:'关联语言',publicSettings:'可见性',visibility:'可见性',account:'账户',legal:'法律信息',settingsDesc:'语言、账户和SNS',private:'私密',privateDesc:'只有您可以看到',unlisted:'不公开',unlistedDesc:'知道链接的人可以访问',public:'公开',publicDesc:'在语言库中显示',loginSub:'登录享受云同步和完整功能',loginWith:'登录',noAccount:'没有账户？',signUp:'注册',signUpSub:'使用电子邮件创建新账户',haveAccount:'已有账户？',createAccount:'创建账户',upgradePlan:'升级计划',stripeNote:'随时取消 · 通过Stripe安全支付',faqTitle:'常见问题',contactTitle:'联系我们',contactDesc:'问题、请求、错误报告',type:'类型',content:'内容',contactEmailLabel:'电子邮件（回复用・必填）',contactEmailPh:'example@email.com',contactMsgPh:'请详细描述…',contactEmailRequired:'请输入电子邮件地址',contactEmailInvalid:'请输入有效的电子邮件地址',contactMsgRequired:'请输入内容',contactSending:'发送中…',contactSuccess:'已收到您的消息，我们将尽快回复。',contactFail:'发送失败，请稍后再试。',todayScene:'今日场景',sceneLabel:'🎬 今日场景',sceneHint:'以此场景为灵感，思考需要哪些词汇和语法',scenePlaceholder:'先想想这个场景需要哪些词汇…',sceneJpLabel:'翻译（可选）',sceneJpPh:'这句话是什么意思？',sceneSavedCount:'历史句子',sceneGenerating:'正在生成新场景…',sceneGenerateFail:'生成失败，请稍后再试。',sceneNewBtn:'🎲 生成新场景',privacyTitle:'隐私政策',tokushohoTitle:'商业交易法展示',editLangName:'编辑语言名称',conlangName:'人造语名称',nativeName:'自然名称（可选）',selectLang:'选择显示语言',aiAdvisor:'语言顾问',new:'新建',memoDesc:'记录想法和笔记',vocabPageDesc:'您语言中的单词',libraryDesc:'浏览全球人造语者创建的语言',phonemeDesc:'辅音、元音、音节结构',vocabDesc:'添加和管理单词',grammarDesc:'语序、时态、格',corpusDesc:'记录例句',scriptDesc:'注册和转换字符',dailyPlaceholder:'写下今天的句子',vibeDesc:'设定语言的氛围',free1:'1种语言',free2:'每天10次AI对话',free3:'仅本地存储',lite1:'无限语言',lite2:'每天50次AI对话',lite3:'云同步',pro1:'所有功能无限制',pro2:'无限AI对话',pro3:'优先支持',terms:'服务条款',currentPlan:'当前计划',upgrade:'💎 升级',violaConnect:'Viola 连接',violaConnectDesc:'与人造语社区分享',violaConnectBtn:'🌸 连接Viola',violaShare:'🌸 分享到Viola',violaShareCopied:'已复制Viola分享文本 🌸',violaComingSoon:'Viola连接功能即将推出 🌸',deleteAccount:'⚠️ 删除账户',deleteAccountConfirm1:'⚠️ 要删除您的账户吗？\n\n所有云数据将被永久删除。此操作无法撤销。',deleteAccountConfirm2:'最终确认：您确定要删除吗？',deleteAccountDone:'账户已删除',deleteAccountFail:'删除失败，请联系客服。',loginRequired:'请先登录',copyFailed:'复制失败',displayNameRequired:'请输入显示名称',saving:'保存中…',saved:'已保存 ✅',savedLocally:'已本地保存',wordFormRequired:'词形和含义为必填项',readingRequired:'读音为必填项',ipaRequired:'IPA发音为必填项',wordAdded:'已添加',firebaseError:'Firebase未连接',emailPasswordRequired:'请输入邮箱和密码',loginFailed:'登录失败',allFieldsRequired:'请填写所有字段',passwordTooShort:'密码至少需要6个字符',accountCreated:'账户创建完成 ✅',signupFailed:'注册失败',loggedOut:'已登出',loggedIn:'已登录 ✅',dailyRequired:'请输入您的句子',dailySaved:'句子已保存 ✅',corpusRequired:'人造语句子为必填项',corpusAdded:'例句已添加',deleted:'已删除',imageTooLarge:'图片必须小于3MB',avatarUpdated:'头像已更新',memoDeleteConfirm:'要删除此备忘录吗？',todayScene:'今日场景',shareTextSuffix:'在Lingua制作中的人造语',vocabCount:'词汇数',wordUnit:'个词',corpusUnit:'例句',phonemeUnit:'音素',aiLimitReached:'已达到今日AI使用上限。升级到Pro可无限使用。',aiThinking:'思考中…',aiError:'发生错误，请重试。',yourLang:'✓ 您的语言',noResults:'没有找到结果',noWords:'还没有词汇',noFilter:'无筛选结果',addFirstWord:'＋ 添加第一个词',noMemos:'还没有备忘录',createFirstMemo:'＋ 创建第一个备忘录',untitled:'无标题',notSet:'未设置',ownLangDesc:'我的人造语',you:'您',building:'构建中',checkoutError:'找不到支付链接',saveFailed:'保存失败',dbError:'IndexedDB不可用',memoSaved:'备忘录已保存',autoSaved:'✓ 已自动保存',cloudRestored:'☁️ 已从云端恢复',langNameSaved:'语言名称已保存',googleLoginFailed:'Google登录失败',vocabulary:'词汇辞典',privateLabel:'🔒 私密',unlistedLabel:'🔗 不公开',publicLabel:'🌍 公开',memoNoTitle:'无标题',consonants:'辅音',vowels:'元音',selectedTap:'已选择（点击试听）',addPhonemesFirst:'请先添加音素',wordForm:'人造语词形 *',reading:'读音 *',ipaLabel:'IPA发音 *',posLabel:'词性',memoNote:'笔记（词源、用法等）',tagsLabel:'标签（空格分隔）',add:'添加',listTab:'列表',conlangSentence:'人造语句子 *',readingOptional:'读音（可选）',translationLabel:'翻译 *',addCorpusBtn:'＋ 添加例句',genre:'类型',mood:'语言氛围',region:'背景/地域',vibeNotes:'笔记与灵感',grammarRuleLabel:'规则与词形',prevChap:'上一章',nextChap:'下一章',syllOnset:'声母 (Onset)',syllNucleus:'韵腹 (Nucleus)',syllCoda:'韵尾 (Coda)',violaActiveMsg:'✅ <strong>已连接Viola</strong> — 已启用自动登录。',violaInactiveMsg:'⭕ <strong>未连接</strong> — 打开Viola将提示设置。',aiSug1:'从哪里开始？',aiSug2:'音韵建议',aiSug3:'如何增加词汇？',aiSug4:'如何设计语法？',aiSug5:'如何设定世界观？',aiGreeting1:'你好！"',aiGreeting2:'"进展不错！有任何问题请告诉我。',meaningLabel:'含义/翻译 *',meaningPh:'例：星光、星者',noneSelected:'尚未选择',allWordsInDict:'所有词汇已注册到词典！',unregisteredWords:'未注册的词',comingSoon:'即将推出…',unlimited:'无限制',allPhonemesImported:'所有音素已导入',phonemesImported:'个音素已导入',recentVocab:'最近添加的词汇'},
+  es:{home:'Inicio',back:'← Inicio',vocab:'Léxico',vocabPageTitle:'Léxico / Diccionario',memo:'Notas',ai:'IA',settings:'Config',phonology:'Fonología',grammar:'Gramática',corpusTitle:'Corpus',script:'Escritura',vibe:'Ambiente',library:'Biblioteca',newLang:'Nuevo Idioma',buildProgress:'Progreso',modules:'Módulos',recentVocab:'Palabras recientes',roadmap:'Hoja de ruta',earnedPts:'Puntos ganados',viewAll:'Ver todo',todaySentence:'Escena de hoy',writeSentence:'Escribir',phonemes:'Fonemas',login:'Iniciar sesión',logout:'Cerrar sesión',save:'Guardar',cancel:'Cancelar',close:'Cerrar',send:'Enviar',free:'Gratis',recommended:'Recomendado',or:'o',faq:'Preguntas frecuentes',contact:'Contacto',privacy:'Política de privacidad',tokushoho:'Ley de transacciones',guestMode:'Modo invitado',loginPrompt:'Inicia sesión para sincronización en la nube',upgradeBanner:'Actualizar a Pro',upgradeDesc:'Sincronización en la nube, IA ilimitada',details:'Detalles',langName:'Nombre del idioma',addWord:'Añadir palabra',all:'Todos',seeAll:'Ver todos →',appLanguage:'Idioma de la app',profileSection:'Perfil',displayName:'Nombre visible',bio:'Biografía',email:'Correo electrónico',tapToChange:'Toca para cambiar imagen',saveProfile:'✓ Guardar',violaDesc:'Conéctate con Viola para compartir tu idioma.',violaTogDesc:'Habilitar inicio de sesión de Viola',connectedLang:'Idioma conectado',publicSettings:'Visibilidad',visibility:'Visibilidad',account:'Cuenta',legal:'Legal',settingsDesc:'Idioma, cuenta y SNS',private:'Privado',privateDesc:'Solo tú puedes verlo',unlisted:'No listado',unlistedDesc:'Solo con el enlace',public:'Público',publicDesc:'Aparece en la biblioteca',loginSub:'Inicia sesión para funciones completas',loginWith:' iniciar sesión',noAccount:'¿Sin cuenta? ',signUp:'Registrarse',signUpSub:'Crear una cuenta nueva con correo',haveAccount:'¿Ya tienes cuenta? ',createAccount:'Crear cuenta',upgradePlan:'Actualizar plan',stripeNote:'Cancela cuando quieras · Pago seguro Stripe',faqTitle:'Preguntas frecuentes',contactTitle:'Contacto',contactDesc:'Preguntas, solicitudes, errores',type:'Tipo',content:'Contenido',contactEmailLabel:'Correo (necesario para responder)',contactEmailPh:'example@email.com',contactMsgPh:'Describe con detalle…',contactEmailRequired:'Por favor ingresa tu correo electrónico',contactEmailInvalid:'Por favor ingresa un correo válido',contactMsgRequired:'Por favor ingresa un mensaje',contactSending:'Enviando…',contactSuccess:'Tu mensaje fue recibido. Te responderemos pronto.',contactFail:'Error al enviar. Inténtalo más tarde.',todayScene:'Escena de hoy',sceneLabel:'🎬 Escena del día',sceneHint:'Usa esta escena como inspiración — ¿qué palabras o gramática necesitas?',scenePlaceholder:'Piensa qué palabras necesita esta escena…',sceneJpLabel:'Traducción (opcional)',sceneJpPh:'¿Qué significa tu frase?',sceneSavedCount:'Frases guardadas',sceneGenerating:'Generando nueva escena…',sceneGenerateFail:'Error al generar. Inténtalo más tarde.',sceneNewBtn:'🎲 Generar nueva escena',privacyTitle:'Política de privacidad',tokushohoTitle:'Ley de transacciones comerciales',editLangName:'Editar nombre del idioma',conlangName:'Nombre del conlang',nativeName:'Nombre natural (opcional)',selectLang:'Seleccionar idioma',aiAdvisor:' Asesor de idiomas',new:'Nuevo',memoDesc:'Registra ideas y notas',vocabPageDesc:'Palabras de tu idioma',libraryDesc:'Explora idiomas de conlangers del mundo',phonemeDesc:'Consonantes, vocales, sílabas',vocabDesc:'Añade y gestiona palabras',grammarDesc:'Orden, tiempo, casos',corpusDesc:'Registra oraciones',scriptDesc:'Registrar y mapear caracteres',vibeDesc:'Define el estilo del idioma',dailyPlaceholder:'Escribe tu frase del día',free1:'1 idioma',free2:'10 chats IA/día',free3:'Solo almacenamiento local',lite1:'Idiomas ilimitados',lite2:'50 chats IA/día',lite3:'Sincronización en la nube',pro1:'Todas las funciones',pro2:'IA ilimitada',pro3:'Soporte prioritario',terms:'Términos de servicio',currentPlan:'Plan actual',upgrade:'💎 Mejorar',violaConnect:'Conectar Viola',violaConnectDesc:'Comparte con la comunidad de conlangers',violaConnectBtn:'🌸 Conectar con Viola',violaShare:'🌸 Compartir en Viola',violaShareCopied:'Texto para Viola copiado 🌸',violaComingSoon:'Integración con Viola próximamente 🌸',deleteAccount:'⚠️ Eliminar cuenta',deleteAccountConfirm1:'⚠️ ¿Eliminar tu cuenta?\n\nTodos los datos en la nube serán eliminados permanentemente. No se puede deshacer.',deleteAccountConfirm2:'Confirmación final: ¿Estás absolutamente seguro?',deleteAccountDone:'Cuenta eliminada',deleteAccountFail:'Error al eliminar. Contacta con soporte.',loginRequired:'Por favor inicia sesión primero',copyFailed:'Error al copiar',displayNameRequired:'Por favor ingresa un nombre visible',saving:'Guardando…',saved:'Guardado ✅',savedLocally:'Guardado localmente',wordFormRequired:'La forma y el significado son obligatorios',readingRequired:'La lectura es obligatoria',ipaRequired:'La pronunciación IPA es obligatoria',wordAdded:'añadido',firebaseError:'Firebase no conectado',emailPasswordRequired:'Por favor ingresa correo y contraseña',loginFailed:'Error de inicio de sesión',allFieldsRequired:'Por favor completa todos los campos',passwordTooShort:'La contraseña debe tener al menos 6 caracteres',accountCreated:'Cuenta creada ✅',signupFailed:'Error en el registro',loggedOut:'Sesión cerrada',loggedIn:'Sesión iniciada ✅',dailyRequired:'Por favor ingresa tu frase',dailySaved:'Frase guardada ✅',corpusRequired:'La frase en conlang es obligatoria',corpusAdded:'Oración añadida',deleted:'Eliminado',imageTooLarge:'La imagen debe ser menor a 3MB',avatarUpdated:'Avatar actualizado',memoDeleteConfirm:'¿Eliminar este memo?',todayScene:'Escena de hoy',shareTextSuffix:'conlang en progreso en Lingua',vocabCount:'Vocabulario',wordUnit:'palabras',corpusUnit:'oraciones',phonemeUnit:'fonemas',aiLimitReached:'Has alcanzado el límite de IA de hoy. Actualiza a Pro para chats ilimitados.',aiThinking:'Pensando…',aiError:'Ocurrió un error. Inténtalo de nuevo.',yourLang:'✓ Tu idioma',noResults:'No se encontraron resultados',noWords:'Aún no hay palabras',noFilter:'Sin coincidencias para el filtro',addFirstWord:'＋ Añadir primera palabra',noMemos:'Aún no hay notas',createFirstMemo:'＋ Crear primera nota',untitled:'Sin título',notSet:'No establecido',ownLangDesc:'Mi conlang',you:'Tú',building:'Construyendo',checkoutError:'Enlace de pago no encontrado',saveFailed:'Error al guardar',dbError:'IndexedDB no disponible',memoSaved:'Nota guardada',autoSaved:'✓ Guardado',cloudRestored:'☁️ Restaurado desde la nube',langNameSaved:'Nombre del idioma guardado',googleLoginFailed:'Error de inicio de sesión con Google',vocabulary:'Léxico / Diccionario',privateLabel:'🔒 Privado',unlistedLabel:'🔗 No listado',publicLabel:'🌍 Público',memoNoTitle:'Sin título',consonants:'Consonantes',vowels:'Vocales',selectedTap:'Seleccionados (toca para escuchar)',addPhonemesFirst:'Por favor añade fonemas primero',wordForm:'Forma en conlang *',reading:'Lectura *',ipaLabel:'Pronunciación IPA *',posLabel:'Categoría gramatical',memoNote:'Notas (etimología, uso, etc.)',tagsLabel:'Etiquetas (separadas por espacio)',add:'Añadir',listTab:'Lista',conlangSentence:'Frase en conlang *',readingOptional:'Lectura (opcional)',translationLabel:'Traducción *',addCorpusBtn:'＋ Añadir frase',genre:'Género',mood:'Ambiente',region:'Escenario / Región',vibeNotes:'Notas e inspiración',grammarRuleLabel:'Reglas y formas',prevChap:'Anterior',nextChap:'Siguiente',syllOnset:'Ataque (Onset)',syllNucleus:'Núcleo (Nucleus)',syllCoda:'Coda',violaActiveMsg:'✅ <strong>Conectado a Viola</strong> — Inicio de sesión automático activado.',violaInactiveMsg:'⭕ <strong>No conectado</strong> — Al abrir Viola se pedirá configuración.',aiSug1:'¿Por dónde empiezo?',aiSug2:'Consejo sobre fonología',aiSug3:'¿Cómo ampliar el vocabulario?',aiSug4:'¿Cómo diseñar la gramática?',aiSug5:'¿Cómo establecer el ambiente?',aiGreeting1:'¡Hola! Gran trabajo en "',aiGreeting2:'"! Pregúntame lo que sea.',meaningLabel:'Significado / Traducción *',meaningPh:'ej. luz de estrellas',noneSelected:'Ninguno seleccionado',allWordsInDict:'¡Todas las palabras están registradas!',unregisteredWords:'Palabras no registradas',comingSoon:'Próximamente…',unlimited:'Ilimitado',allPhonemesImported:'Todos los fonemas ya importados',phonemesImported:'fonemas importados',recentVocab:'Palabras añadidas recientemente'}
+};
+function t(k){return i18n[_lang]?.[k]??i18n.jp[k]??k;}
+function setLang(code){_lang=code;try{localStorage.setItem('lingua_lang',code);}catch(e){}applyLang();renderLangPills();const lb=document.getElementById('lang-btn');if(lb)lb.textContent=code.toUpperCase();showToast(t('selectLang')+': '+code.toUpperCase(),'info');}
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(k)el.textContent=t(k);});
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const k=el.getAttribute('data-i18n-placeholder');if(k)el.placeholder=t(k);});
+  renderRoadmap();updateDailySent();renderLegalPages();
+}
+function updateDailySent(){
+  const p=_todayScene||getTodayPrompt();
+  const sc=document.getElementById('d-topic-scene');
+  const hi=document.getElementById('d-topic-hint');
+  if(sc)sc.textContent=p.scene;
+  if(hi)hi.textContent=p.hint;
+  const ds=document.getElementById('d-sent');if(!ds)return;
+  const latest=(S.sentences?.length>0)?S.sentences[S.sentences.length-1]:
+               (S.corpus?.length>0)?(S.corpus[S.corpus.length-1]?.cl||S.corpus[S.corpus.length-1]?.conlang||null):null;
+  const shareBtn=document.getElementById('viola-share-btn');
+  if(latest&&latest.trim()){
+    ds.textContent=latest;ds.style.color='var(--tx)';
+    if(shareBtn)shareBtn.style.display='inline-flex';
+  }else{
+    ds.textContent=t('sceneHint')||'今日のシーンをコンラングで表現してみよう';ds.style.color='var(--txm)';
+    if(shareBtn)shareBtn.style.display='none';
+  }
+}
+function shareToViola(){
+  const ds=document.getElementById('d-sent');
+  const text=ds?.textContent?.trim();
+  if(!text)return;
+  const lang=S.langName||t('newLang');
+  const shareText=`【${lang}】${text} — ${t('shareTextSuffix')} #Lingua #conlang`;
+  if(navigator.share){navigator.share({title:'Lingua — '+lang,text:shareText}).catch(()=>{});}
+  else{navigator.clipboard?.writeText(shareText).then(()=>showToast(t('violaShareCopied'),'success')).catch(()=>showToast(t('copyFailed'),'error'));}
+}
+function renderLangPills(){['jp','en','zh','es'].forEach(c=>{const e=document.getElementById('lp-'+c);if(e)e.classList.toggle('active',_lang===c);});}
+
+// ---- World Scripts ----
+const WORLD_SCRIPTS=[
+  {id:'runic',name:{jp:'ルーン文字',en:'Runic',zh:'如尼文字',es:'Rúnico'},preview:'ᚠᚢᚦᚨᚱ',chars:'ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛞ ᛟ'},
+  {id:'geez',name:{jp:'ゲエズ文字',en:"Ge'ez",zh:'埃塞俄比亚文',es:"Ge'ez"},preview:'ሀለሐ',chars:'ሀ ሁ ሂ ሃ ሄ ህ ሆ ለ ሉ ሊ ላ ሌ ል ሎ ሐ ሑ ሒ ሓ ሔ ሕ ሖ መ ሙ ሚ ማ ሜ ም ሞ ሠ ሡ ሢ ሣ ሤ ሥ ሦ ረ ሩ ሪ ራ ሬ ር ሮ ሰ ሱ ሲ ሳ ሴ ስ ሶ'},
+  {id:'cyrillic',name:{jp:'キリル文字',en:'Cyrillic',zh:'西里尔字母',es:'Cirílico'},preview:'АБВГД',chars:'А Б В Г Д Е Ж З И К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я а б в г д е ж з и к л м н о п р с т у ф х ц ч ш щ'},
+  {id:'greek',name:{jp:'ギリシャ文字',en:'Greek',zh:'希腊字母',es:'Griego'},preview:'ΑΒΓΔΕ',chars:'Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω'},
+  {id:'arabic',name:{jp:'アラビア文字',en:'Arabic',zh:'阿拉伯字母',es:'Árabe'},preview:'ابتث',chars:'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي'},
+  {id:'hebrew',name:{jp:'ヘブライ文字',en:'Hebrew',zh:'希伯来字母',es:'Hebreo'},preview:'אבגד',chars:'א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת'},
+  {id:'hangul',name:{jp:'ハングル',en:'Hangul',zh:'韩文字母',es:'Hangul'},preview:'ㄱㄴㄷ',chars:'ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎ ㅏ ㅑ ㅓ ㅕ ㅗ ㅛ ㅜ ㅠ ㅡ ㅣ'},
+  {id:'devanagari',name:{jp:'デーヴァナーガリー',en:'Devanagari',zh:'梵文字母',es:'Devanagari'},preview:'अआइ',chars:'अ आ इ ई उ ऊ ए ऐ ओ औ क ख ग घ च छ ज झ ट ठ ड ढ त थ द ध न प फ ब भ म य र ल व श ष स ह'},
+  {id:'thai',name:{jp:'タイ文字',en:'Thai',zh:'泰文字母',es:'Tailandés'},preview:'กขค',chars:'ก ข ฃ ค ฅ ฆ ง จ ฉ ช ซ ฌ ญ ฎ ฏ ฐ ฑ ฒ ณ ด ต ถ ท ธ น บ ป ผ ฝ พ ฟ ภ ม ย ร ล ว ศ ษ ส ห ฬ อ ฮ'},
+  {id:'georgian',name:{jp:'ジョージア文字',en:'Georgian',zh:'格鲁吉亚字母',es:'Georgiano'},preview:'აბგ',chars:'ა ბ გ დ ე ვ ზ თ ი კ ლ მ ნ ო პ ჟ რ ს ტ უ ფ ქ ღ ყ შ ჩ ც ძ წ ჭ ხ ჯ ჰ'},
+  {id:'armenian',name:{jp:'アルメニア文字',en:'Armenian',zh:'亚美尼亚字母',es:'Armenio'},preview:'ԱԲԳ',chars:'Ա Բ Գ Դ Ե Զ Է Ը Թ Ժ Ի Լ Խ Ծ Կ Հ Ձ Ղ Ճ Մ Յ Ն Շ Ո Չ Պ Ջ Ռ Ս Վ Տ Ր Ց Ւ Փ Ք Օ Ֆ'},
+  {id:'tibetan',name:{jp:'チベット文字',en:'Tibetan',zh:'藏文字母',es:'Tibetano'},preview:'ཀཁག',chars:'ཀ ཁ ག ང ཅ ཆ ཇ ཉ ཏ ཐ ད ན པ ཕ བ མ ཙ ཚ ཛ ཝ ཞ ཟ འ ཡ ར ལ ཤ ས ཧ ཨ'},
+  {id:'ogham',name:{jp:'オガム文字',en:'Ogham',zh:'欧甘文字',es:'Ogham'},preview:'ᚁᚂᚃ',chars:'ᚁ ᚂ ᚃ ᚄ ᚅ ᚆ ᚇ ᚈ ᚉ ᚊ ᚋ ᚌ ᚍ ᚎ ᚏ ᚐ ᚑ ᚒ ᚓ ᚔ ᚕ ᚖ ᚗ ᚘ ᚙ ᚚ'},
+  {id:'glagolitic',name:{jp:'グラゴール文字',en:'Glagolitic',zh:'格拉哥里字母',es:'Glagolítico'},preview:'ⰀⰁⰂ',chars:'Ⰰ Ⰱ Ⰲ Ⰳ Ⰴ Ⰵ Ⰶ Ⰷ Ⰸ Ⰹ Ⰺ Ⰻ Ⰼ Ⰽ Ⰾ Ⰿ Ⱀ Ⱁ Ⱂ Ⱃ Ⱄ Ⱅ Ⱆ Ⱇ Ⱈ Ⱉ Ⱊ Ⱋ Ⱌ Ⱍ Ⱎ Ⱏ Ⱐ Ⱑ Ⱒ Ⱓ Ⱔ Ⱕ Ⱖ'},
+  {id:'phoenician',name:{jp:'フェニキア文字',en:'Phoenician',zh:'腓尼基字母',es:'Fenicio'},preview:'𐤀𐤁𐤂',chars:'𐤀 𐤁 𐤂 𐤃 𐤄 𐤅 𐤆 𐤇 𐤈 𐤉 𐤊 𐤋 𐤌 𐤍 𐤎 𐤏 𐤐 𐤑 𐤒 𐤓 𐤔 𐤕'},
+];
+
+// ---- Roadmap ----
+const ROADMAP=[
+  {id:'name',pts:10,icon:'🌍',check:()=>!!S.langName,title:{jp:'言語名を設定',en:'Set Language Name',zh:'设置语言名称',es:'Establecer nombre'},desc:{jp:'あなたの言語に名前をつけましょう',en:'Give your language a name',zh:'给你的语言命名',es:'Dale nombre a tu idioma'}},
+  {id:'phoneme3',pts:20,icon:'🎵',check:()=>(S.phoneme.consonants.length+S.phoneme.vowels.length)>=3,title:{jp:'最初の音素 (3個)',en:'First Phonemes (3)',zh:'首批音素 (3)',es:'Primeros fonemas (3)'},desc:{jp:'子音と母音を合わせて3つ以上選択',en:'Select at least 3 consonants or vowels',zh:'选择至少3个辅音或元音',es:'Selecciona al menos 3 fonemas'}},
+  {id:'vocab10',pts:30,icon:'📖',check:()=>S.dictionary.length>=10,title:{jp:'語彙10語',en:'10 Vocabulary Words',zh:'10个词汇',es:'10 palabras'},desc:{jp:'辞書に10語以上を登録',en:'Add 10 or more words to your dictionary',zh:'在词典中添加10个或更多单词',es:'Agrega 10 o más palabras al diccionario'}},
+  {id:'grammar',pts:20,icon:'📐',check:()=>!!S.grammar.order,title:{jp:'文法の設定',en:'Grammar Setup',zh:'语法设置',es:'Configurar gramática'},desc:{jp:'語順を1つ設定',en:'Set a word order for your language',zh:'为你的语言设置语序',es:'Establece el orden de las palabras'}},
+  {id:'corpus5',pts:30,icon:'📝',check:()=>S.corpus.length>=5,title:{jp:'例文5文',en:'5 Example Sentences',zh:'5个例句',es:'5 oraciones'},desc:{jp:'例文集に5文以上を追加',en:'Add 5 or more example sentences',zh:'在语料库中添加5个或更多例句',es:'Agrega 5 o más oraciones de ejemplo'}},
+  {id:'daily',pts:20,icon:'📅',check:()=>!!S.done?.sentence,title:{jp:'1日1文チャレンジ',en:'Daily Sentence',zh:'每日一句',es:'Frase diaria'},desc:{jp:'1日1文に作文を投稿',en:'Submit your first daily sentence',zh:'提交你的第一个每日句子',es:'Envía tu primera oración diaria'}},
+  {id:'script',pts:30,icon:'✍️',check:()=>!!(S.script?.romanization||S.script?.rules||S.script?.worldScript),title:{jp:'文字体系の設定',en:'Script System',zh:'文字体系',es:'Sistema de escritura'},desc:{jp:'文字体系または転写ルールを設定',en:'Set up your script system or romanization',zh:'设置文字体系或罗马化规则',es:'Configura tu sistema de escritura'}},
+  {id:'vocab50',pts:50,icon:'📚',check:()=>S.dictionary.length>=50,title:{jp:'語彙50語',en:'50 Vocabulary Words',zh:'50个词汇',es:'50 palabras'},desc:{jp:'辞書に50語以上を登録',en:'Add 50 or more words to your dictionary',zh:'在词典中添加50个或更多单词',es:'Agrega 50 o más palabras'}},
+  {id:'vibe',pts:20,icon:'🌌',check:()=>!!(S.vibe?.genre||S.vibe?.mood),title:{jp:'世界観の設定',en:'Vibe Setup',zh:'世界观设置',es:'Configurar ambiente'},desc:{jp:'ジャンルまたはムードを設定',en:'Set the genre or mood for your language',zh:'设置你语言的流派或风格',es:'Establece el género o el estilo de tu idioma'}},
+];
+function renderRoadmap(){
+  let earned=0;
+  const items=ROADMAP.map(r=>{const done=r.check();if(done)earned+=r.pts;return{...r,done};});
+  const num=document.getElementById('total-pts-num');if(num)num.textContent=earned+' pts';
+  // リストはホームには表示しない（すべて見るモーダルに集約）
+  const e=document.getElementById('roadmap-list');if(e)e.innerHTML='';
+}
+function showAchDetail(id){const r=ROADMAP.find(x=>x.id===id);if(!r)return;const done=r.check();document.getElementById('ach-icon').textContent=r.icon;document.getElementById('ach-title').textContent=r.title[_lang]||r.title.jp;document.getElementById('ach-desc').textContent=r.desc[_lang]||r.desc.jp;document.getElementById('ach-pts').textContent=(done?'✓ ':'')+(r.pts)+' pts';document.getElementById('ach-modal').classList.add('open');}
+function openAchModal(){
+  const box=document.querySelector('.ach-box');
+  if(!box)return;
+  
+  // 4セクションの進捗判定（指定キーで判定）
+  const sylLen=(S.syllables||S.phoneme?.consonants||[]).length;
+  const vocabLen=(S.vocab||S.dictionary||[]).length;
+  const gdataDone=!!(S.g_data||(S.grammar?.chapters&&Object.values(S.grammar.chapters).some(v=>v&&v.trim()))||(S.grammar?.order));
+  const bioDone=!!(S.bio||(S.vibe?.notes&&S.vibe.notes.trim()));
+  
+  const sections=[
+    {
+      title:{jp:'🎵 音韻設定',en:'🎵 Phonology',zh:'🎵 音韵设置',es:'🎵 Fonología'},
+      done:sylLen>0,
+      desc:sylLen>0
+        ? {jp:`✓ 完了（音素: ${(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0)}個）`,en:`✓ Done (${(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0)} phonemes)`,zh:`✓ 完成（音素: ${(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0)}个）`,es:`✓ Completado (${(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0)} fonemas)`}
+        : {jp:'未設定 — 子音・母音を追加してください',en:'Not set — add consonants and vowels',zh:'未设置 — 请添加辅音和元音',es:'No configurado — añade consonantes y vocales'}
+    },
+    {
+      title:{jp:'📖 基本語彙',en:'📖 Vocabulary',zh:'📖 基础词汇',es:'📖 Vocabulario'},
+      done:vocabLen>=10,
+      desc:vocabLen>=10
+        ? {jp:`✓ 完了（${vocabLen}語）`,en:`✓ Done (${vocabLen} words)`,zh:`✓ 完成（${vocabLen}个词）`,es:`✓ Completado (${vocabLen} palabras)`}
+        : {jp:`${vocabLen}/10語 — あと${10-vocabLen}語`,en:`${vocabLen}/10 words — ${10-vocabLen} more needed`,zh:`${vocabLen}/10个词 — 还需${10-vocabLen}个`,es:`${vocabLen}/10 palabras — faltan ${10-vocabLen}`}
+    },
+    {
+      title:{jp:'📐 文法体系',en:'📐 Grammar',zh:'📐 语法体系',es:'📐 Gramática'},
+      done:gdataDone,
+      desc:gdataDone
+        ? {jp:'✓ 完了（文法ルール記述済み）',en:'✓ Done (grammar rules written)',zh:'✓ 完成（语法规则已记录）',es:'✓ Completado (reglas gramaticales escritas)'}
+        : {jp:'未設定 — 文法タブで語順や文法ルールを記述してください',en:'Not set — define word order and rules in the Grammar tab',zh:'未设置 — 请在语法标签中记录语序和规则',es:'No configurado — define el orden y las reglas en la pestaña Gramática'}
+    },
+    {
+      title:{jp:'🌌 世界観設定',en:'🌌 World Setting',zh:'🌌 世界观设置',es:'🌌 Ambientación'},
+      done:bioDone,
+      desc:bioDone
+        ? {jp:'✓ 完了（世界観設定済み）',en:'✓ Done (world setting filled)',zh:'✓ 完成（世界观已设置）',es:'✓ Completado (ambientación completada)'}
+        : {jp:'未設定 — 世界観タブまたは Bio を記入してください',en:'Not set — fill in the Vibe tab or Bio',zh:'未设置 — 请填写世界观标签或Bio',es:'No configurado — completa la pestaña Vibe o Bio'}
+    }
+  ];
+  const L=_lang||'jp';
+  const completed = sections.filter(s=>s.done).length;
+  const progress = Math.round((completed/sections.length)*100);
+  let earned=0;
+  ROADMAP.forEach(r=>{if(r.check())earned+=r.pts;});
+  const achTitles={jp:'🏆 言語構築の総合進捗',en:'🏆 Language Build Progress',zh:'🏆 语言构建总进度',es:'🏆 Progreso de construcción'};
+  const cmpLabel={jp:`${completed}/4 セクション完了（${progress}%）`,en:`${completed}/4 sections done (${progress}%)`,zh:`${completed}/4 板块完成（${progress}%）`,es:`${completed}/4 secciones completadas (${progress}%)`};
+  const ptsLabel={jp:`獲得ポイント: ${earned} pts`,en:`Points earned: ${earned} pts`,zh:`已获积分: ${earned} pts`,es:`Puntos ganados: ${earned} pts`};
+  const roadmapLabel={jp:'ロードマップ',en:'ROADMAP',zh:'路线图',es:'HOJA DE RUTA'};
+
+  box.innerHTML=`
+    <div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--pur)">${achTitles[L]||achTitles.jp}</div>
+    <div style="font-size:.76rem;color:var(--txs);margin-bottom:6px">${cmpLabel[L]||cmpLabel.jp}</div>
+    <div style="font-size:.76rem;color:var(--pur);margin-bottom:16px">${ptsLabel[L]||ptsLabel.jp}</div>
+    <div style="height:4px;background:var(--sf3);border-radius:2px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:${progress}%;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .5s ease;border-radius:2px"></div></div>
+    ${sections.map(s=>`
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:8px;background:var(--sf2);border-radius:8px;border-left:3px solid ${s.done?'var(--ok)':'var(--br)'}">
+        <span style="font-size:1rem;flex-shrink:0;color:${s.done?'var(--ok)':'var(--txm)'}">${s.done?'✓':'○'}</span>
+        <div style="flex:1">
+          <div style="font-size:.84rem;font-weight:600;margin-bottom:3px">${s.title[L]||s.title.jp}</div>
+          <div style="font-size:.71rem;color:var(--txs)">${s.desc[L]||s.desc.jp}</div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:8px;height:1px;background:var(--br);margin-bottom:12px"></div>
+    <div style="font-size:.65rem;font-weight:700;color:var(--txm);letter-spacing:.1em;margin-bottom:10px">${roadmapLabel[L]||roadmapLabel.jp}</div>
+    ${ROADMAP.map(r=>{const done=r.check();return`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:5px;background:var(--sf2);border-radius:7px;border:1px solid ${done?'var(--okb)':'var(--br)'}">
+      <span>${r.icon}</span>
+      <span style="flex:1;font-size:.76rem">${r.title[_lang]||r.title.jp}</span>
+      <span style="font-size:.62rem;color:${done?'var(--ok)':'var(--txm)'}">${done?'✓':''} ${r.pts}pts</span>
+    </div>`;}).join('')}
+    <button class="btn btn-gh btn-sm" style="margin-top:14px;width:100%" onclick="closeAchModal()">${t('close')}</button>
+  `;
+  
+  document.getElementById('ach-modal').classList.add('open');
+}
+function closeAchModal(){document.getElementById('ach-modal').classList.remove('open');}
+
+// ---- IPA Audio ----
+const IPA_APPROX={'p':'p','b':'b','t':'t','d':'d','k':'k','g':'g','q':'kw','ʔ':'','f':'f','v':'v','s':'s','z':'z','ʃ':'sh','ʒ':'zh','x':'kh','h':'h','θ':'th','ð':'dh','ç':'hy','ɸ':'f','β':'v','ɣ':'gh','ts':'ts','dz':'dz','tʃ':'ch','dʒ':'j','m':'m','n':'n','ŋ':'ng','ɲ':'ny','ɴ':'n','l':'l','r':'r','ɾ':'r','ʀ':'r','ɹ':'r','w':'w','j':'y','ɥ':'ui','ʋ':'v','i':'ee','e':'e','ɛ':'eh','æ':'a','a':'ah','y':'ue','ø':'ur','œ':'uh','ɨ':'i','ə':'uh','ɐ':'a','ɑ':'ah','ɯ':'u','ɤ':'oh','o':'oh','ɔ':'aw','u':'oo','ʊ':'u'};
+function playIPA(s){if(!window.speechSynthesis)return;window.speechSynthesis.cancel();const text=IPA_APPROX[s]||s;if(!text)return;const u=new SpeechSynthesisUtterance(text);u.rate=0.6;u.pitch=1.1;window.speechSynthesis.speak(u);}
+
+// ---- IPA Data ----
+const IPA_C=[{g:'破裂音',s:['p','b','t','d','k','g','q','ʔ']},{g:'摩擦音',s:['f','v','s','z','ʃ','ʒ','x','h','θ','ð','ç','ɸ','β','ɣ']},{g:'破擦音',s:['ts','dz','tʃ','dʒ']},{g:'鼻音',s:['m','n','ŋ','ɲ','ɴ']},{g:'流音',s:['l','r','ɾ','ʀ','ɹ']},{g:'接近音',s:['w','j','ɥ','ʋ']}];
+const IPA_V=[{g:'前舌',s:['i','e','ɛ','æ','a','y','ø','œ']},{g:'中舌',s:['ɨ','ə','ɐ','ɑ']},{g:'後舌',s:['ɯ','ɤ','o','ɔ','u','ʊ']}];
+
+// ---- Boot ----
+document.addEventListener('DOMContentLoaded',()=>{
+  try{const sl=localStorage.getItem('lingua_lang');if(sl)_lang=sl;}catch(e){}
+  const bar=document.getElementById('load-bar');
+  if(bar){bar.style.width='40%';setTimeout(()=>bar.style.width='80%',300);}
+  loadState();
+  try{const s=localStorage.getItem(AKEY);if(s)_au=JSON.parse(s);}catch(e){}
+  const fbPoll=setInterval(()=>{
+    if(window.FB?.onAuthStateChanged&&window.FB.auth){
+      clearInterval(fbPoll);
+      window.FB.onAuthStateChanged(window.FB.auth,async u=>{
+        if(u){_au={uid:u.uid,name:u.displayName||u.email?.split('@')[0]||'User',email:u.email||'',photo:u.photoURL||''};try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}await loadPData(_au.uid);await loadFSState(_au.uid);}
+        else{_au=null;try{localStorage.removeItem(AKEY);}catch(e){}}_updateUI();
+      });
+    }
+  },200);
+  setTimeout(async()=>{
+    if(window.FB?.getRedirectResult&&window.FB.auth){
+      try{const r=await window.FB.getRedirectResult(window.FB.auth);if(r?.user){_au={uid:r.user.uid,name:r.user.displayName||'User',email:r.user.email||'',photo:r.user.photoURL||''};try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}closeLogin();showToast(t('loggedIn'),'success');goTo('dashboard');}}catch(e){}
+    }
+  },600);
+  setTimeout(()=>{
+    if(bar)bar.style.width='100%';
+    setTimeout(()=>{
+      const ls=document.getElementById('loading-screen'),ap=document.getElementById('app');
+      if(ls){ls.style.opacity='0';setTimeout(()=>ls.remove(),800);}
+      if(ap)ap.style.display='block';
+      applyLang();renderLangPills();
+      _updateUI();initMDB();renderFaq();renderLib();renderVocab();renderRoadmap();
+      generateScene();
+    },300);
+  },800);
+});
+
+// ---- State ----
+function saveState(){try{localStorage.setItem(SKEY,JSON.stringify(S));}catch(e){}}
+function loadState(){try{const r=localStorage.getItem(SKEY);if(!r)return;const p=JSON.parse(r);Object.keys(DS).forEach(k=>{if(k in p)S[k]=p[k];});}catch(e){}}
+function schSave(){clearTimeout(_dsTimer);_dsTimer=setTimeout(()=>{saveState();showAS(t('autoSaved'));if(_au?.uid&&_isPro)schFSSave();renderRoadmap();},700);}
+function showAS(m){const e=document.getElementById('autosave-el');if(!e)return;e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
+let _fsT=null;
+function schFSSave(){clearTimeout(_fsT);_fsT=setTimeout(()=>saveFSState(),2000);}
+async function saveFSState(){if(!_au?.uid||!window.FB)return;try{await window.FB.setDoc(window.FB.doc(window.FB.db,'users',_au.uid),{linguaState:JSON.stringify(S),updatedAt:new Date().toISOString()},{merge:true});}catch(e){}}
+async function loadFSState(uid){if(!window.FB)return;try{const sn=await window.FB.getDoc(window.FB.doc(window.FB.db,'users',uid));if(sn.exists()&&sn.data().linguaState){const r=JSON.parse(sn.data().linguaState);Object.keys(DS).forEach(k=>{if(k in r)S[k]=r[k];});_updateUI();renderRoadmap();showAS(t('cloudRestored'));}}catch(e){}}
+
+// ---- Navigation ----
+function goTo(id){
+  window.scrollTo(0,0);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const bm={dashboard:'bn-dash',vocab:'bn-vocab',memo:'bn-memo',aichat:'bn-ai',settings:'bn-settings'};
+  const bb=document.getElementById(bm[id]);if(bb)bb.classList.add('active');
+  if(id==='vocab'){renderVocab();const vc=document.getElementById('vtab-count');if(vc)vc.textContent=S.dictionary.length;renderVcRecent();}
+  if(id==='library')renderLib();
+  if(id==='memo')loadMemos();
+  if(id==='settings')loadSettingsPage();
+  if(id==='contact')renderContactForm();
+  if(id==='tokushoho'||id==='privacy'||id==='terms')renderLegalPages();
+  if(id==='aichat'){const lbl=document.getElementById('ai-lang-lbl');if(lbl)lbl.textContent=(S.langName||t('newLang'));if(_aihist.length===0)initAI();}
+  updateVisUI();
+  // PCナビアクティブ同期
+  document.querySelectorAll('.pc-nav-btn').forEach(b=>b.classList.remove('active'));
+  const pcn=document.getElementById('pcn-'+id);if(pcn)pcn.classList.add('active');
+}
+function setBN(id){document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));const e=document.getElementById(id);if(e)e.classList.add('active');}
+
+// ---- Update UI ----
+function _updateUI(){updateDash();updateAuthUI();updateVisUI();}
+function updateDash(){
+  const words=S.dictionary?.length||0,phos=(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0),corp=S.corpus?.length||0;
+  const lname=document.getElementById('d-lname');if(lname)lname.textContent=S.langName||t('newLang');
+  const vpt=document.getElementById('vocab-page-title');if(vpt)vpt.textContent=(S.langName?S.langName+'の':'')+t('vocabPageTitle');
+  const lsub=document.getElementById('d-lsub');if(lsub)lsub.textContent=S.langNative||(S.langName?S.langName+' — '+t('building'):t('newLang'));
+  const sw=document.getElementById('sw');if(sw)sw.textContent=words;
+  const sp=document.getElementById('sp');if(sp)sp.textContent=phos;
+  const sc=document.getElementById('sc');if(sc)sc.textContent=corp;
+  const checks=[S.langName?.length>0,(S.phoneme?.consonants?.length||0)>=3,(S.phoneme?.vowels?.length||0)>=2,words>=1,words>=10,corp>=1,S.grammar?.order?.length>0,S.vibe?.genre?.length>0];
+  const pct=Math.round(checks.filter(Boolean).length/checks.length*100);
+  const pb=document.getElementById('pr-bar');if(pb)pb.style.width=pct+'%';
+  const pp=document.getElementById('pr-pct');if(pp)pp.textContent=pct+'%';
+  const ms={phoneme:phos>=3,vocab:words>=1,grammar:S.grammar?.order?.length>0,corpus:corp>=1,script:!!(S.script?.rules||S.script?.romanization||S.script?.worldScript),vibe:S.vibe?.genre?.length>0};
+  Object.entries(ms).forEach(([k,d])=>{const c=document.getElementById('mod-'+k);if(!c)return;c.classList.toggle('done',d);let chk=c.querySelector('.mchk');if(!chk&&d){chk=document.createElement('div');chk.className='mchk';chk.textContent='✓';c.appendChild(chk);}else if(chk&&!d)chk.remove();});
+  const mps=document.getElementById('mod-phoneme-s');if(mps)mps.textContent=phos>0?phos+'  '+t('phonemeUnit'):t('phonemeDesc');
+  const mvs=document.getElementById('mod-vocab-s');if(mvs)mvs.textContent=words>0?words+' '+t('wordUnit'):t('vocabDesc');
+  const mcs=document.getElementById('mod-corpus-s');if(mcs)mcs.textContent=corp>0?corp+' '+t('corpusUnit'):t('corpusDesc');
+  const dc=document.getElementById('daily-card'),ds=document.getElementById('d-sent');
+  if(dc&&ds){updateDailySent(ds);}
+
+  renderRoadmap();
+}
+function updateAuthUI(){
+  const gb=document.getElementById('guest-banner'),ub=document.getElementById('upgrade-banner'),av=document.getElementById('top-avatar'),pb=document.getElementById('plan-badge');
+  if(gb)gb.style.display=!_au?'flex':'none';
+  if(ub)ub.style.display=(_au&&!_isPro)?'flex':'none';
+  if(av){if(_au?.photo)av.innerHTML='<img src="'+_au.photo+'" alt="">';else if(_au?.name){av.innerHTML='';av.textContent=(_au.name[0]||'U').toUpperCase();}else{av.innerHTML='';av.textContent='✦';}}
+  const spl=document.getElementById('settings-plan-label');if(spl){if(_plan==='pro')spl.textContent='PRO ✦';else if(_plan==='lite')spl.textContent='LITE';else spl.textContent='FREE';}
+}
+
+// ---- Visibility ----
+function updateVisUI(){
+  const icons={private:'🔒',unlisted:'🔗',public:'🌍'};
+  const labels={private:t('private'),unlisted:t('unlisted'),public:t('public')};
+  const v=S.visibility||'private';
+  const e=document.getElementById('vis-tx');if(e)e.textContent=(icons[v]||'🔒')+' '+(labels[v]||t('private'));
+  const vd=document.getElementById('vis-desc-text');if(vd){const descs={private:t('privateDesc'),unlisted:t('unlistedDesc'),public:t('publicDesc')};vd.textContent=(icons[v]||'🔒')+' '+(labels[v])+' — '+(descs[v]||'');}
+}
+function openVisPop(){document.getElementById('vis-pop').classList.add('open');['private','unlisted','public'].forEach(v=>{const e=document.getElementById('vopt-'+v);if(e)e.classList.toggle('sel',S.visibility===v);});}
+function closeVisPop(){document.getElementById('vis-pop').classList.remove('open');}
+function setVis(v){S.visibility=v;updateVisUI();schSave();closeVisPop();}
+
+// ---- Lang Name ----
+function openLangNameEditor(){document.getElementById('lname-inp').value=S.langName||'';document.getElementById('lnative-inp').value=S.langNative||'';document.getElementById('lname-modal').classList.add('open');}
+function closeLNE(){document.getElementById('lname-modal').classList.remove('open');}
+function saveLN(){S.langName=document.getElementById('lname-inp').value.trim();S.langNative=document.getElementById('lnative-inp').value.trim();updateDash();schSave();closeLNE();showToast(t('langNameSaved'),'success');}
+
+// ---- Lang Picker ----
+function openLangPicker(){document.getElementById('lang-picker-modal').classList.add('open');}
+function closeLangPicker(){document.getElementById('lang-picker-modal').classList.remove('open');}
+
+// ---- Auth ----
+function openLogin(){document.getElementById('login-modal').classList.add('open');}
+function closeLogin(){document.getElementById('login-modal').classList.remove('open');}
+function showSignup(){closeLogin();document.getElementById('signup-modal').style.display='flex';}
+function closeSignup(){document.getElementById('signup-modal').style.display='none';}
+async function loginGoogle(){if(!window.FB){showToast(t('firebaseError'),'error');return;}try{const p=new window.FB.GoogleAuthProvider();await window.FB.signInWithRedirect(window.FB.auth,p);}catch(e){showToast(t('googleLoginFailed')+': '+e.message,'error');}}
+async function loginEmail(){const em=document.getElementById('lg-email').value.trim(),ps=document.getElementById('lg-pass').value;if(!em||!ps){showToast(t('emailPasswordRequired'),'error');return;}if(!window.FB){showToast(t('firebaseError'),'error');return;}try{const c=await window.FB.signInWithEmailAndPassword(window.FB.auth,em,ps);_au={uid:c.user.uid,name:c.user.displayName||em.split('@')[0],email:em,photo:''};try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}closeLogin();showToast(t('loggedIn'),'success');_updateUI();}catch(e){showToast(t('loginFailed')+': '+e.message.replace('Firebase: ',''),'error');}}
+async function signupEmail(){const nm=document.getElementById('sg-name').value.trim(),em=document.getElementById('sg-email').value.trim(),ps=document.getElementById('sg-pass').value;if(!nm||!em||!ps){showToast(t('allFieldsRequired'),'error');return;}if(ps.length<6){showToast(t('passwordTooShort'),'error');return;}if(!window.FB){showToast(t('firebaseError'),'error');return;}try{const c=await window.FB.createUserWithEmailAndPassword(window.FB.auth,em,ps);_au={uid:c.user.uid,name:nm,email:em,photo:''};try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}if(window.FB.db)await window.FB.setDoc(window.FB.doc(window.FB.db,'users',c.user.uid),{profile_name:nm,profile_bio:'',viola_active:false,created_at:new Date().toISOString()},{merge:true});closeSignup();showToast(t('accountCreated'),'success');_updateUI();}catch(e){showToast(t('signupFailed')+': '+e.message.replace('Firebase: ',''),'error');}}
+async function doLogout(){if(window.FB?.signOut)try{await window.FB.signOut(window.FB.auth);}catch(e){}_au=null;_plan='free';_isPro=false;try{localStorage.removeItem(AKEY);}catch(e){}_updateUI();goTo('dashboard');showToast(t('loggedOut'),'info');}
+function connectViola(){
+  if(!_au){showToast(t('loginRequired'),'error');openLogin();return;}
+  showToast(t('violaComingSoon'),'info');
+}
+async function deleteAccount(){
+  if(!_au){showToast(t('loginRequired'),'error');return;}
+  if(!confirm(t('deleteAccountConfirm1')))return;
+  if(!confirm(t('deleteAccountConfirm2')))return;
+  try{
+    if(window.FB?.auth?.currentUser)await window.FB.auth.currentUser.delete().catch(()=>{});
+    localStorage.clear();
+    _au=null;_plan='free';_isPro=false;S=JSON.parse(JSON.stringify(DS));
+    _updateUI();showToast(t('deleteAccountDone'),'info');goTo('dashboard');
+  }catch(e){showToast(t('deleteAccountFail'),'error');}
+}
+
+// ---- Payment ----
+const SL={lite:'https://buy.stripe.com/bJeaEZ3VYbJPfyEe292wU02',pro:'https://buy.stripe.com/7sY14pboqaFLdqw2jr2wU03'};
+function openUpgrade(){document.getElementById('upgrade-modal').classList.add('open');}
+function closeUpgrade(){document.getElementById('upgrade-modal').classList.remove('open');}
+function doCheckout(plan){if(!_au){closeUpgrade();openLogin();showToast(t('login'),'info');return;}const u=SL[plan];if(u)window.open(u+'?client_reference_id='+encodeURIComponent(_au.uid),'_blank');else showToast(t('checkoutError'),'error');}
+
+// ---- Settings Page ----
+async function loadPData(uid){if(!window.FB)return;try{const sn=await window.FB.getDoc(window.FB.doc(window.FB.db,'users',uid));if(sn.exists()){_pdata=sn.data();if(_pdata.plan==='pro'||_pdata.plan==='lite'){_plan=_pdata.plan;_isPro=true;}}}catch(e){}}
+function loadSettingsPage(){
+  const ne=document.getElementById('pf-name'),be=document.getElementById('pf-bio'),ee=document.getElementById('pf-email'),vt=document.getElementById('viola-tog'),ln=document.getElementById('pf-lname'),ls=document.getElementById('pf-lstats'),al=document.getElementById('p-avlg'),ai=document.getElementById('p-av-init'),nd=document.getElementById('pf-name-disp');
+  if(ln)ln.textContent=S.langName||'('+t('newLang')+')';if(ls)ls.textContent=t('vocabCount')+': '+(S.dictionary?.length||0);
+  renderLangPills();
+  if(!_au){if(ne)ne.value='';if(ee)ee.value='';return;}
+  if(ee)ee.value=_au.email||'';
+  if(_au.photo&&al)al.innerHTML='<img src="'+_au.photo+'" alt="">';else if(ai&&_au.name)ai.textContent=(_au.name[0]||'U').toUpperCase();
+  if(ne)ne.value=_pdata.profile_name||_au.name||'';
+  if(nd)nd.textContent=_au.name||'-';
+  if(be){be.value=_pdata.profile_bio||'';const bc=document.getElementById('bio-cnt');if(bc)bc.textContent=be.value.length;}
+  if(vt)vt.checked=!!_pdata.viola_active;
+  updateViolaMsg(!!_pdata.viola_active);
+  updateVisUI();
+}
+function onViolaTog(cb){updateViolaMsg(cb.checked);}
+function updateViolaMsg(on){const e=document.getElementById('viola-msg');if(!e)return;e.style.display='block';if(on){e.style.borderLeftColor='var(--ok)';e.innerHTML=t('violaActiveMsg');}else{e.style.borderLeftColor='var(--br)';e.innerHTML=t('violaInactiveMsg');}}
+async function saveProfile(){
+  const btn=document.getElementById('pf-save-lbl'),nm=document.getElementById('pf-name')?.value.trim(),bio=document.getElementById('pf-bio')?.value.trim(),va=document.getElementById('viola-tog')?.checked;
+  if(!nm){showToast(t('displayNameRequired'),'error');return;}
+  if(btn)btn.textContent=t('saving');
+  const d={profile_name:nm,profile_bio:bio||'',viola_active:!!va,dictionary_id:S.langName||'',updated_at:new Date().toISOString()};
+  if(_au){_au.name=nm;try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}}_pdata={..._pdata,...d};
+  if(_au?.uid&&window.FB?.db)try{await window.FB.setDoc(window.FB.doc(window.FB.db,'users',_au.uid),d,{merge:true});showToast(t('saveProfile')+' ✅','success');}catch(e){showToast(t('saveFailed')+': '+e.message,'error');}
+  else showToast(t('savedLocally'),'success');
+  if(btn)btn.textContent='✓ '+t('save');_updateUI();
+}
+function triggerAv(){if(!_au){showToast(t('login'),'info');return;}document.getElementById('av-file')?.click();}
+async function handleAvFile(inp){
+  const f=inp.files?.[0];if(!f)return;if(f.size>3*1024*1024){showToast(t('imageTooLarge'),'error');return;}
+  const pw=document.getElementById('av-prog-wrap'),pb=document.getElementById('av-prog-bar');if(pw)pw.style.display='block';if(pb)pb.style.width='40%';
+  const reader=new FileReader();reader.onload=async e=>{const b64=e.target.result;if(pb)pb.style.width='80%';const al=document.getElementById('p-avlg');if(al)al.innerHTML='<img src="'+b64+'" alt="">';if(_au)_au.photo=b64;try{localStorage.setItem(AKEY,JSON.stringify(_au));}catch(e){}if(_au?.uid&&window.FB?.db)try{await window.FB.setDoc(window.FB.doc(window.FB.db,'users',_au.uid),{profile_photo:b64},{merge:true});}catch(e){}if(pb)pb.style.width='100%';setTimeout(()=>{if(pw)pw.style.display='none';},500);showToast(t('avatarUpdated'),'success');updateAuthUI();};reader.readAsDataURL(f);
+}
+
+// ---- Phoneme Editor ----
+function buildPhEd(){
+  const C=S.phoneme.consonants||[],V=S.phoneme.vowels||[];
+  return `<div style="margin-bottom:16px"><div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">🎵 ${t('phonology')}</div><div style="font-size:.74rem;color:var(--txs)">言語の音素（子音・母音）と音節構造を設定します。音素をタッチすると音が聞けます 🔊</div></div>
+  <div class="tabbar"><button class="tabbtn active" onclick="swTab(this,'ptab-c')">${t('consonants')} (${C.length})</button><button class="tabbtn" onclick="swTab(this,'ptab-v')">${t('vowels')} (${V.length})</button><button class="tabbtn" onclick="swTab(this,'ptab-s')">音節構造</button></div>
+  <div id="ptab-c" class="tabpn active">
+    <div class="field-block"><label class="fl">${t('selectedTap')}</label><div id="c-chips">${C.map(p=>`<span class="pchip" onclick="playIPA('${p}')">${p} <span class="spk">🔊</span><span class="x" onclick="event.stopPropagation();rmPh('c','${p}')">✕</span></span>`).join('')||'<span style="color:var(--txm);font-size:.74rem">'+t('noneSelected')+'</span>'}</div></div>
+    ${IPA_C.map(g=>`<div class="ipas"><div style="font-size:.6rem;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">${g.g}</div><div class="ipag">${g.s.map(s=>`<button class="ipabtn ${C.includes(s)?'sel':''}" onclick="togPh('c','${s}',this)">${s}<span class="play-ico">▶</span></button>`).join('')}</div></div>`).join('')}
+  </div>
+  <div id="ptab-v" class="tabpn">
+    <div class="field-block"><label class="fl">${t('selectedTap')}</label><div id="v-chips">${V.map(p=>`<span class="pchip" onclick="playIPA('${p}')">${p} <span class="spk">🔊</span><span class="x" onclick="event.stopPropagation();rmPh('v','${p}')">✕</span></span>`).join('')||'<span style="color:var(--txm);font-size:.74rem">'+t('noneSelected')+'</span>'}</div></div>
+    ${IPA_V.map(g=>`<div class="ipas"><div style="font-size:.6rem;font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">${g.g}</div><div class="ipag">${g.s.map(s=>`<button class="ipabtn ${V.includes(s)?'sel':''}" onclick="togPh('v','${s}',this)">${s}<span class="play-ico">▶</span></button>`).join('')}</div></div>`).join('')}
+  </div>
+  <div id="ptab-s" class="tabpn">${buildSyllEd()}</div>`;}
+
+function buildSyllEd(){const all=[...(S.phoneme.consonants||[]),...(S.phoneme.vowels||[])];if(!all.length)return '<div class="empty" style="padding:24px 0">'+t('addPhonemesFirst')+'</div>';return['onset','nucleus','coda'].map(pt=>{const lb={onset:t('syllOnset'),nucleus:t('syllNucleus'),coda:t('syllCoda')};const sel=S.syllable[pt]||[];return`<div style="margin-bottom:16px"><div class="fl" style="margin-bottom:8px">${lb[pt]}</div><div style="display:flex;flex-wrap:wrap;gap:4px">${all.map(p=>`<button style="padding:3px 9px;border:1px solid ${sel.includes(p)?'var(--acb)':'var(--br)'};border-radius:6px;background:${sel.includes(p)?'var(--acd)':'var(--sf2)'};font-family:monospace;font-size:.8rem;color:${sel.includes(p)?'var(--ac)':'var(--txs)'};cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="togSyll('${pt}','${p}',this)">${p}</button>`).join('')}</div></div>`;}).join('');}
+
+function togPh(t,s,btn){playIPA(s);const a=t==='c'?S.phoneme.consonants:S.phoneme.vowels;const i=a.indexOf(s);if(i>=0)a.splice(i,1);else a.push(s);btn.classList.toggle('sel',a.includes(s));const cid=t==='c'?'c-chips':'v-chips';const ch=document.getElementById(cid);if(ch)ch.innerHTML=a.map(p=>`<span class="pchip" onclick="playIPA('${p}')">${p} <span class="spk">🔊</span><span class="x" onclick="event.stopPropagation();rmPh('${t}','${p}')">✕</span></span>`).join('')||'<span style="color:var(--txm);font-size:.74rem">'+t('noneSelected')+'</span>';schSave();}
+function rmPh(t,s){const a=t==='c'?S.phoneme.consonants:S.phoneme.vowels;const i=a.indexOf(s);if(i>=0)a.splice(i,1);const cid=t==='c'?'c-chips':'v-chips';const ch=document.getElementById(cid);if(ch)ch.innerHTML=a.map(p=>`<span class="pchip" onclick="playIPA('${p}')">${p} <span class="spk">🔊</span><span class="x" onclick="event.stopPropagation();rmPh('${t}','${p}')">✕</span></span>`).join('')||'<span style="color:var(--txm);font-size:.74rem">'+t('noneSelected')+'</span>';document.querySelectorAll('.ipabtn').forEach(b=>{if(b.textContent.trim()===s)b.classList.remove('sel');});schSave();}
+function togSyll(pt,s,btn){const a=S.syllable[pt]||(S.syllable[pt]=[]);const i=a.indexOf(s);if(i>=0)a.splice(i,1);else a.push(s);btn.style.background=a.includes(s)?'var(--acd)':'var(--sf2)';btn.style.borderColor=a.includes(s)?'var(--acb)':'var(--br)';btn.style.color=a.includes(s)?'var(--ac)':'var(--txs)';schSave();}
+
+// ---- Vocab Editor ----
+function getPOS(){const L=_lang||'jp';const pos={jp:['名詞','動詞','形容詞','副詞','代名詞','助詞','接続詞','感動詞','前置詞','その他'],en:['Noun','Verb','Adjective','Adverb','Pronoun','Particle','Conjunction','Interjection','Preposition','Other'],zh:['名词','动词','形容词','副词','代词','助词','连词','感叹词','前置词','其他'],es:['Sustantivo','Verbo','Adjetivo','Adverbio','Pronombre','Partícula','Conjunción','Interjección','Preposición','Otro']};return pos[L]||pos.jp;}
+function buildVcEd(){return`<div style="margin-bottom:16px"><div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">📖 ${t('vocabulary')}</div><div style="font-size:.74rem;color:var(--txs)">${t('vocabPageDesc')}</div></div>
+<div class="field-block"><label class="fl">${t('wordForm')}</label><input type="text" class="inp" id="vc-word" placeholder="例：aelindra" autocomplete="off" spellcheck="false"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field-block"><label class="fl">${t('reading')}</label><input type="text" class="inp" id="vc-read" placeholder="例：エリンドラ"></div><div class="field-block"><label class="fl">発音記号（IPA）*</label><input type="text" class="inp" id="vc-ipa" placeholder="例：/ˈɛlɪndɾa/" spellcheck="false"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field-block"><label class="fl">${t('posLabel')}</label><select class="inp" id="vc-pos">${getPOS().map(p=>`<option value="${p}">${p}</option>`).join('')}</select></div><div class="field-block"><label class="fl">${t('meaningLabel')}</label><input type="text" class="inp" id="vc-mean" placeholder="${t('meaningPh')}"></div></div>
+<div class="field-block"><label class="fl">${t('memoNote')}</label><input type="text" class="inp" id="vc-note" placeholder="例：古エルフ語の aelin (星) から"></div>
+<div class="field-block"><label class="fl">${t('tagsLabel')}</label><input type="text" class="inp" id="vc-tags" placeholder="例：nature spirit"></div>
+<button class="btn btn-p btn-bl" onclick="addWord()">${t('addWord')}</button>
+<div style="margin-top:18px;height:1px;background:var(--br)"></div>
+<div style="margin-top:12px;font-size:.78rem;color:var(--txs)">${t('vocabCount')}: <strong style="color:var(--tx)">${S.dictionary.length}</strong> ${t('wordUnit')}</div>
+<div id="vc-list" style="margin-top:8px">${S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('')}</div>`;}
+
+function wCardHtml(w,idx){return`<div class="wc"><div style="flex:1;min-width:0"><div class="wm">${esc(w.word||w.conlang||'')}</div>${w.reading?'<div style="font-size:.7rem;color:var(--ac2)">'+esc(w.reading)+'</div>':''}${w.ipa?'<div style="font-size:.68rem;color:var(--pur);font-family:monospace">'+esc(w.ipa)+'</div>':''}<div class="wmn">${esc(w.meaning||w.jp||'')}</div>${w.tags?.length?'<div style="margin-top:3px">'+w.tags.map(tag=>'<span class="ti">'+esc(tag)+'</span>').join('')+'</div>':''}</div><span class="wpos">${esc(w.pos||'?')}</span><button class="btn btn-gh btn-xs" style="color:var(--rs);border-color:var(--rsb)" onclick="delWord(${idx})">✕</button></div>`;}
+
+function switchVocabTab(tab,btn){
+  document.querySelectorAll('#page-vocab .tabpn').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#page-vocab .tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('vtab-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(tab==='list')renderVocab();
+  if(tab==='add')renderVcRecent();
+}
+function renderVcRecent(){
+  const el=document.getElementById('vc-recent');if(!el)return;
+  if(!S.dictionary.length){el.innerHTML='';return;}
+  el.innerHTML='<div class="sh" style="margin-bottom:10px">'+t('recentVocab')+'</div>'+S.dictionary.slice().reverse().slice(0,5).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');
+}
+function addWord(){
+  const wd=document.getElementById('vc-word')?.value.trim();
+  const rd=document.getElementById('vc-read')?.value.trim();
+  const ipa=document.getElementById('vc-ipa')?.value.trim();
+  const mn=document.getElementById('vc-mean')?.value.trim();
+  if(!wd||!mn){showToast(t('wordFormRequired'),'error');return;}
+  if(!rd){showToast(t('readingRequired'),'error');return;}
+  if(!ipa){showToast(t('ipaRequired'),'error');return;}
+  const tags=(document.getElementById('vc-tags')?.value.trim()||'').split(/\s+/).filter(Boolean);
+  S.dictionary.push({word:wd,conlang:wd,reading:rd,ipa:ipa,pos:document.getElementById('vc-pos')?.value||getPOS()[0],meaning:mn,jp:mn,notes:document.getElementById('vc-note')?.value.trim()||'',tags,addedAt:new Date().toISOString()});
+  schSave();
+  document.getElementById('vc-word').value='';
+  document.getElementById('vc-mean').value='';
+  document.getElementById('vc-read').value='';
+  if(document.getElementById('vc-ipa'))document.getElementById('vc-ipa').value='';
+  if(document.getElementById('vc-note'))document.getElementById('vc-note').value='';
+  if(document.getElementById('vc-tags'))document.getElementById('vc-tags').value='';
+  const vl=document.getElementById('vc-list');
+  if(vl)vl.innerHTML=S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');
+  renderVcRecent();
+  const vc=document.getElementById('vtab-count');if(vc)vc.textContent=S.dictionary.length;
+  showToast('"'+wd+'" '+t('wordAdded'),'success');
+  updateDash();
+}
+function delWord(idx){S.dictionary.splice(idx,1);schSave();renderVocab();const vl=document.getElementById('vc-list');if(vl)vl.innerHTML=S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');updateDash();showToast(t('deleted'),'info');}
+function setPF(pos,btn){_pf=pos;document.querySelectorAll('.pos-fbtn').forEach(b=>b.classList.remove('act'));if(btn)btn.classList.add('act');renderVocab();}
+function renderVocab(){const le=document.getElementById('vocab-list'),fb=document.getElementById('pos-fb');if(!le)return;const q=(document.getElementById('vocab-srch')?.value||'').toLowerCase().trim();let ws=S.dictionary.slice();if(q)ws=ws.filter(w=>(w.word||'').toLowerCase().includes(q)||(w.meaning||'').toLowerCase().includes(q)||(w.tags||[]).some(tag=>tag.toLowerCase().includes(q)));if(_pf!=='all')ws=ws.filter(w=>w.pos===_pf);if(fb&&S.dictionary.length>0){const ps=[...new Set(S.dictionary.map(w=>w.pos))];fb.innerHTML=`<button class="pos-fbtn ${_pf==='all'?'act':''}" onclick="setPF('all',this)">${t('all')} (${S.dictionary.length})</button>`+ps.map(p=>`<button class="pos-fbtn ${_pf===p?'act':''}" onclick="setPF('${p}',this)">${p} (${S.dictionary.filter(w=>w.pos===p).length})</button>`).join('');}if(!ws.length){le.innerHTML=`<div class="empty"><div style="font-size:2rem;margin-bottom:10px;opacity:.4">📖</div><div>${q?t('noResults'):S.dictionary.length===0?t('noWords'):t('noFilter')}</div>${!q&&!S.dictionary.length?'<button class="btn btn-p" style="margin-top:12px" onclick="openVocabEditor()">'+t('addFirstWord')+'</button>':''}</div>`;return;}le.innerHTML=ws.map(w=>wCardHtml(w,S.dictionary.indexOf(w))).join('');}
+
+// ---- Grammar Editor (15-Step Textbook Format) ----
+const GR_STEPS=[
+  {id:'greet',num:'01',icon:'👋',title:'挨拶・基本表現',hint:'「こんにちは」「ありがとう」「はい/いいえ」など、最初に使う定型表現を記録しましょう。挨拶は言語の第一印象です。'},
+  {id:'numbers',num:'02',icon:'🔢',title:'数字・数詞',hint:'1〜10の基本数詞、序数（第一・第二）、大きな数の作り方を定義します。数字は語彙の基盤になります。'},
+  {id:'pronouns',num:'03',icon:'👤',title:'代名詞',hint:'一人称（私・われわれ）、二人称（あなた）、三人称（彼・彼女・それ）の区別を設定します。包括的vs排他的複数も検討を。'},
+  {id:'possessives',num:'04',icon:'🏷️',title:'所有格',hint:'「私の〜」「あなたの〜」という所有の表現方法。接辞なのか、独立した語なのかを決めましょう。'},
+  {id:'demonstratives',num:'05',icon:'👉',title:'指示詞',hint:'「これ・それ・あれ」の近称/中称/遠称の区別。2段階か3段階かを設計します。'},
+  {id:'nouns',num:'06',icon:'📦',title:'名詞の変化',hint:'性（男性/女性/中性）、数（単数/複数）、格変化（主格/対格/属格…）を決定します。'},
+  {id:'basicverbs',num:'07',icon:'⚡',title:'基本動詞',hint:'「〜だ/ある」「〜する」「〜いく/くる」「〜食べる」「〜見る」など、最重要動詞の語形を登録します。'},
+  {id:'tense',num:'08',icon:'⏱️',title:'時制',hint:'過去・現在・未来の表現法。接辞か助動詞か、アスペクト（完了/未完了）も含めて整理します。'},
+  {id:'negation',num:'09',icon:'🚫',title:'否定',hint:'「〜ではない」「〜しない」の否定形。否定辞の位置（前置/後置/接辞）を決めましょう。'},
+  {id:'modals',num:'10',icon:'💭',title:'助動詞',hint:'「〜できる」「〜しなければ」「〜したい」などの法助動詞。独立語か接辞かを設計します。'},
+  {id:'questions',num:'11',icon:'❓',title:'疑問詞',hint:'「誰・何・どこ・いつ・なぜ・どのように」の疑問詞と、Yes/No疑問文の作り方を定義します。'},
+  {id:'conjunctions',num:'12',icon:'🔗',title:'接続詞',hint:'「〜と〜」「〜か〜」「〜けれど」「〜から」など文や節をつなぐ語を整備します。'},
+  {id:'adpositions',num:'13',icon:'📍',title:'前置詞・後置詞',hint:'「〜に」「〜で」「〜から」などの場所・方向・手段を表す語。SOV言語なら後置詞が自然です。'},
+  {id:'wordorder',num:'14',icon:'📝',title:'語順',hint:'主語・動詞・目的語の基本語順（SOV/SVO等）と、修飾語の位置を確定させましょう。'},
+  {id:'cases',num:'15',icon:'🎓',title:'格変化',hint:'格変化がある場合、各格のルールを記述します。規則変化と不規則変化も整理しましょう。'},
+];
+function buildGrEd(){
+  var g=S.grammar||{};
+  if(!g.chapters)g.chapters={};
+  var cid=_grChap||'greet';
+  var ch=GR_STEPS.find(function(c){return c.id===cid;})||GR_STEPS[0];
+  var nav='<div class="gr-chapnav">'+GR_STEPS.map(function(c){
+    var hasCnt=!!(g.chapters[c.id]&&g.chapters[c.id].trim());
+    return '<button class="gr-chapbtn'+(cid===c.id?' act':'')+'" onclick="setGrChap(\''+c.id+'\')" title="'+c.title+'"><span class="gr-ch-n">'+c.num+'</span><span>'+c.icon+(hasCnt?'✓':'')+'</span></button>';
+  }).join('')+'</div>';
+  var head='<div class="gr-page-head"><span style="font-size:1.5rem">'+ch.icon+'</span><div><div class="gr-ch-num">STEP '+ch.num+' / 15</div><div class="gr-ch-title">'+ch.title+'</div></div></div>';
+  var hint='<div class="card" style="background:var(--purd);border-color:var(--purb);margin-bottom:14px"><div style="font-size:.62rem;font-weight:700;color:var(--pur);letter-spacing:.1em;margin-bottom:5px">💡 構築ヒント</div><div style="font-size:.76rem;color:var(--txs);line-height:1.7">'+ch.hint+'</div></div>';
+  var ta='<div class="field-block"><label class="fl">📖 '+ch.title+' — '+t('grammarRuleLabel')+'</label><textarea class="inp inp-ta gr-ta" placeholder="このステップのルールや語形を自由に記述してください…&#10;&#10;例：&#10;私 = aeli&#10;あなた = sael&#10;彼 = koru" oninput="setGrNotes(\''+cid+'\',this.value)">'+esc(g.chapters[cid]||'')+'</textarea></div>';
+  var footer='<div style="display:flex;gap:8px;margin-top:8px">';
+  var idx=GR_STEPS.findIndex(function(c){return c.id===cid;});
+  if(idx>0)footer+='<button class="btn btn-gh" onclick="setGrChap(\''+GR_STEPS[idx-1].id+'\')">'+'← '+t('prevChap')+'</button>';
+  footer+='<button class="btn btn-p" onclick="schSave();showToast(t(\'saved\'),\'success\')" data-i18n-btn="save">'+t('save')+'</button>';
+  if(idx<GR_STEPS.length-1)footer+='<button class="btn btn-gh" style="margin-left:auto" onclick="setGrChap(\''+GR_STEPS[idx+1].id+'\')">'+t('nextChap')+' →</button>';
+  footer+='</div>';
+  return '<div class="gr-book">'+nav+'<div class="gr-page">'+head+hint+ta+footer+'</div></div>';
+}
+function setGr(k,v,btn){if(!S.grammar)S.grammar={};S.grammar[k]=v;btn.closest('.field-block').querySelectorAll('.btn').forEach(function(b){b.classList.remove('btn-p');});btn.classList.add('btn-p');schSave();}
+function togGrCase(c,btn){if(!S.grammar.cases)S.grammar.cases=[];var i=S.grammar.cases.indexOf(c);if(i>=0)S.grammar.cases.splice(i,1);else S.grammar.cases.push(c);btn.classList.toggle('btn-p',S.grammar.cases.includes(c));schSave();}
+function setGrChap(id){_grChap=id;var bd=document.getElementById('ed-body');if(bd)bd.innerHTML=buildGrEd();}
+function setGrNotes(cid,val){if(!S.grammar.chapters)S.grammar.chapters={};S.grammar.chapters[cid]=val;schSave();}
+
+// ---- Corpus Editor ----
+function buildCpEd(){return`<div style="margin-bottom:16px"><div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">📝 ${t('corpusTitle')}</div><div style="font-size:.74rem;color:var(--txs)">${t('corpusDesc')}</div></div>
+<div class="tabbar"><button class="tabbtn active" onclick="swTab(this,'ctab-add')">${t('add')}</button><button class="tabbtn" onclick="swTab(this,'ctab-list');document.getElementById('ctab-list').innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('')">${t('listTab')} (${S.corpus.length})</button></div>
+<div id="ctab-add" class="tabpn active">
+<div class="field-block"><label class="fl">${t('conlangSentence')}</label><input type="text" class="inp" id="cp-cl" placeholder="例：Aelindra vael korum" spellcheck="false"></div>
+<div class="field-block"><label class="fl">${t('readingOptional')}</label><input type="text" class="inp" id="cp-rd" placeholder="例：エリンドラ・バエル・コルム" spellcheck="false"></div>
+<div class="field-block"><label class="fl">${t('translationLabel')}</label><input type="text" class="inp" id="cp-jp" placeholder="例：星は夜に輝く"></div>
+<button class="btn btn-p btn-bl" onclick="addCorpus()">${t('addCorpusBtn')}</button>
+</div>
+<div id="ctab-list" class="tabpn"></div>`;}
+
+function ccHtml(c,i){return`<div class="cc"><div class="ccl">${esc(c.cl||c.conlang||'')}</div>${c.read||c.kana?'<div class="cck">'+esc(c.read||c.kana)+'</div>':''}<div class="ccj">${esc(c.jp||c.meaning||'')}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-xs" data-idx="${i}" onclick="spkC(this)">🔊</button><button class="btn btn-xs btn-r" onclick="delCorpus(${i})">${t('deleted')}</button></div></div>`;}
+function addCorpus(){const cl=document.getElementById('cp-cl')?.value.trim(),jp=document.getElementById('cp-jp')?.value.trim();if(!cl||!jp){showToast(t('corpusRequired'),'error');return;}S.corpus.push({cl,conlang:cl,read:document.getElementById('cp-rd')?.value.trim()||'',jp});schSave();document.getElementById('cp-cl').value='';document.getElementById('cp-rd').value='';document.getElementById('cp-jp').value='';const lp=document.getElementById('ctab-list');if(lp)lp.innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('');showToast(t('corpusAdded'),'success');}
+function delCorpus(i){S.corpus.splice(i,1);schSave();const lp=document.getElementById('ctab-list');if(lp)lp.innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('');}
+
+// ---- Daily Editor ----
+const DAILY_PROMPTS=[
+  {scene:'夜明け前、誰かが旅立つ朝',hint:'別れ・出発にまつわる言葉が必要になるかも。見送る側の感情は？'},
+  {scene:'市場で初めて見る果物を手に取った瞬間',hint:'感嘆・色・形・匂いを表す語。交易語はある？'},
+  {scene:'古い神殿の壁に刻まれた碑文',hint:'神聖語・格式語・過去形。この言語の文字体系は？'},
+  {scene:'嵐の前の静けさ、村人が空を見上げる',hint:'天候・予兆・集団を表す語。自然現象の擬音は？'},
+  {scene:'子どもが初めて魔法を使えた瞬間の叫び',hint:'感嘆詞・興奮。この言語に感情爆発の表現はある？'},
+  {scene:'旅人が焚き火を囲んで名前を名乗り合う',hint:'自己紹介・所属・出身地の語。名前の構造は？'},
+  {scene:'戦士が戦場に向かう前に呟く言葉',hint:'覚悟・祈り・誓い。簡潔で力強い表現を作ろう'},
+  {scene:'森の奥で聞いたことのない鳥の声',hint:'音の擬音語・比喩・発見の感情。音韻が活きる場面'},
+  {scene:'老人が孫に昔話を語り始める',hint:'昔話の語り口・時制・世代を示す語'},
+  {scene:'二人が初めて心を通わせた夜',hint:'感情・距離感・やわらかい言葉。この言語の敬語は？'},
+  {scene:'商人が値段を吊り上げようとする場面',hint:'交渉・数・価値判断の語。語気を強める副詞は？'},
+  {scene:'王が民に向けて勅令を読み上げる',hint:'権威語・命令形・公式文体。文語と口語の差は？'},
+  {scene:'死者を弔う儀式で唱えるひとこと',hint:'死後の概念・魂・送り出す言葉。宗教語彙は？'},
+  {scene:'敵だったはずの相手に助けられた後',hint:'感謝・不信・複雑な感情。この言語に皮肉はある？'},
+  {scene:'地図にない場所を発見した探検家',hint:'方向・地形・命名する行為。名詞の造語法は？'},
+  {scene:'子守唄を歌う親の声',hint:'やさしい音韻・反復・安心感。この言語のリズムは？'},
+  {scene:'祭りの夜、群衆が一斉に叫ぶ言葉',hint:'集合的な感情表現・掛け声・リズム'},
+  {scene:'裏切り者が最後に残した手紙',hint:'告白・弁明・後悔。この言語の一人称は何種類ある？'},
+  {scene:'山頂で一人、遠くの故郷を眺める',hint:'郷愁・遠近・風景描写。感傷的な語彙はある？'},
+  {scene:'初雪が降った朝、子どもたちが外へ飛び出す',hint:'季節・無邪気な喜び・動きを表す動詞'},
+  {scene:'見知らぬ言語で書かれた手紙を受け取る',hint:'困惑・期待・翻訳行為。この世界の言語観は？'},
+  {scene:'空を飛ぶ生き物に初めて乗った瞬間',hint:'高さ・速度・恐怖と興奮の混在'},
+  {scene:'師匠が弟子に最後の教えを授ける場面',hint:'知恵・継承・比喩的な表現。格言の形は？'},
+  {scene:'廃墟となった都市を歩く者の独り言',hint:'喪失・過去の痕跡・現在との対比'},
+  {scene:'海の底にある古代都市の碑',hint:'水・沈黙・永遠性。この言語に複数形はある？'},
+  {scene:'闇の中で手探りに仲間を探す',hint:'暗闇・感覚・信頼。呼びかけの語はどんな形？'},
+  {scene:'占い師が未来を告げる言葉',hint:'予言・曖昧さ・時制。この言語に推量形はある？'},
+  {scene:'異なる種族が初めて言葉を交わす',hint:'接触・誤解・共通語の発生。どう歩み寄る？'},
+  {scene:'英雄が名前を捨てる瞬間',hint:'アイデンティティ・否定・変容。否定形の作り方は？'},
+  {scene:'世界の始まりを語る神話の冒頭',hint:'起源・無・創造。この言語で「無」はどう表す？'},
+];
+let _todayScene=null; // {scene, hint, date}
+
+async function fetchAIScene(){
+  const lang=_lang||'jp';
+  const today=new Date();
+  // 日付シード：全ユーザーが同じ日に同じお題を得る
+  const seed=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const langInstructions={
+    jp:'日本語で。scene（シーン・場面描写、20〜40字）とhint（このシーンを表現するのに必要な語彙・文法のヒント、30〜60字）をJSONで返せ。',
+    en:'In English. Return JSON with scene (vivid scene description, 10-20 words) and hint (vocabulary/grammar hint for this scene, 15-30 words).',
+    zh:'用中文。返回JSON，包含scene（场景描述，20-40字）和hint（词汇和语法提示，20-40字）。',
+    es:'En español. Devuelve JSON con scene (descripción de escena, 10-20 palabras) y hint (sugerencia de vocabulario/gramática, 15-30 palabras).'
+  };
+  const prompt=`コンラング制作者向け「今日のシーン」を1つ生成してください。日付シード:${seed}。
+このシードから一意に決まるシーンを返してください（同じシードなら必ず同じシーンを返す）。
+ファンタジー・SF・神話・日常など多様なジャンルから選んでください。
+${langInstructions[lang]||langInstructions.jp}
+JSONのみ。前置き不要。例: {"scene":"古い神殿の壁に刻まれた碑文","hint":"神聖語・格式語・過去形。この言語の文字体系は？"}`;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:prompt}]})
+  });
+  const data=await res.json();
+  const text=data.content?.[0]?.text||'';
+  const clean=text.replace(/```json|```/g,'').trim();
+  return JSON.parse(clean);
+}
+
+async function generateScene(forceNew=false){
+  const today=new Date().toDateString();
+  if(!forceNew&&_todayScene&&_todayScene.date===today)return _todayScene;
+  // Try stored scene
+  if(!forceNew){
+    try{const stored=JSON.parse(localStorage.getItem('lingua_scene')||'null');
+    if(stored&&stored.date===today){_todayScene=stored;return _todayScene;}}catch(e){}
+  }
+  // Show generating state
+  const scEl=document.getElementById('d-topic-scene');
+  const hiEl=document.getElementById('d-topic-hint');
+  if(scEl)scEl.textContent=t('sceneGenerating');
+  if(hiEl)hiEl.textContent='';
+  // Fallback to static if API fails
+  const fallback=DAILY_PROMPTS[(new Date().getFullYear()*366+new Date().getMonth()*31+new Date().getDate())%DAILY_PROMPTS.length];
+  try{
+    const result=await fetchAIScene();
+    if(!result.scene)throw new Error('no scene');
+    _todayScene={scene:result.scene,hint:result.hint||'',date:today};
+    try{localStorage.setItem('lingua_scene',JSON.stringify(_todayScene));}catch(e){}
+  }catch(e){
+    _todayScene={scene:fallback.scene,hint:fallback.hint,date:today};
+  }
+  updateDailySent();
+  return _todayScene;
+}
+
+function renderLegalPages(){
+  const lang=_lang||'jp';
+  const tok=document.getElementById('tokushoho-body');
+  if(tok){
+    const rows={
+      jp:[['販売事業者','Lingua開発チーム'],['サービス名','Lingua — コンラングビルダー'],['所在地','日本国内（請求に応じ速やかに開示）'],['連絡先','お問い合わせフォームよりご連絡ください'],['販売価格','Liteプラン: $9.9/月、Proプラン: $19.9/月（税込）'],['支払方法','クレジットカード（Stripe経由）'],['支払時期','ご契約時および毎月の更新日に自動請求'],['役務の提供時期','決済完了後、即時提供開始'],['返品・キャンセル','月次プランは翌月以降の更新をいつでもキャンセル可能。既払い分の返金はいたしかねます。'],['動作環境','最新のChrome / Safari / Firefox 推奨']],
+      en:[['Seller','Lingua Development Team'],['Service','Lingua — Conlang Builder'],['Location','Japan (disclosed promptly upon request)'],['Contact','Via the contact form'],['Pricing','Lite: $9.9/mo, Pro: $19.9/mo (tax incl.)'],['Payment','Credit card via Stripe'],['Billing','Charged at signup and on each monthly renewal'],['Service Start','Immediately upon payment'],['Returns/Cancel','Monthly plans may be cancelled at any time. No refunds for the current period.'],['Environment','Latest Chrome / Safari / Firefox recommended']],
+      zh:[['销售商','Lingua开发团队'],['服务名称','Lingua — 人造语构建器'],['所在地','日本（根据要求迅速披露）'],['联系方式','通过联系表单'],['价格','Lite: $9.9/月, Pro: $19.9/月（含税）'],['支付方式','通过Stripe的信用卡'],['账单周期','注册时及每月续费时自动扣款'],['服务开始','付款完成后立即提供'],['退款/取消','月费计划可随时取消。不退还当期费用。'],['运行环境','推荐最新版 Chrome / Safari / Firefox']],
+      es:[['Vendedor','Equipo de Lingua'],['Servicio','Lingua — Constructor de conlangs'],['Ubicación','Japón (divulgado a solicitud)'],['Contacto','A través del formulario de contacto'],['Precios','Lite: $9.9/mes, Pro: $19.9/mes (IVA incl.)'],['Pago','Tarjeta de crédito vía Stripe'],['Facturación','Al registrarse y en cada renovación mensual'],['Inicio del servicio','Inmediatamente tras el pago'],['Cancelación','Los planes mensuales se pueden cancelar en cualquier momento. No se reembolsa el período actual.'],['Entorno','Última versión de Chrome / Safari / Firefox recomendada']],
+    };
+    const r=rows[lang]||rows.jp;
+    tok.innerHTML='<table class="law-t">'+r.map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('')+'</table>';
+  }
+  const priv=document.getElementById('privacy-body');
+  if(priv){
+    const secs={
+      jp:[['1. 収集する情報','当サービスは、ご利用に際して以下の情報を収集することがあります：メールアドレス（ログイン時）、アカウント情報、作成した言語データ（クラウド同期時）、アクセスログ。'],['2. 利用目的','収集した情報は、サービスの提供・改善、サポート対応、決済処理のためにのみ使用します。第三者への販売・提供は一切行いません。'],['3. データの保存','ゲスト・無料プランのデータはブラウザのローカルストレージに保存されます。LiteおよびProプランではFirebase（Google LLC）のサーバーで管理されます。'],['4. Cookie','サービスの品質改善のため、Cookieおよび類似の技術を使用する場合があります。'],['5. お問い合わせ','プライバシーに関するご質問は、お問い合わせフォームよりご連絡ください。']],
+      en:[['1. Information Collected','We may collect: email address (on login), account info, language data (on cloud sync), and access logs.'],['2. Purpose of Use','Collected information is used solely for service provision, improvement, support, and payment processing. We never sell or share it with third parties.'],['3. Data Storage','Guest/free plan data is stored in browser local storage. Lite and Pro plan data is managed on Firebase (Google LLC) servers.'],['4. Cookies','We may use cookies and similar technologies to improve service quality.'],['5. Contact','For privacy-related questions, please use the contact form.']],
+      zh:[['1. 收集的信息','我们可能收集以下信息：电子邮件地址（登录时）、账户信息、语言数据（云同步时）、访问日志。'],['2. 使用目的','收集的信息仅用于提供和改进服务、客户支持及支付处理。我们不会向第三方出售或提供这些信息。'],['3. 数据存储','游客/免费计划的数据存储在浏览器本地存储中。Lite和Pro计划的数据由Firebase（Google LLC）服务器管理。'],['4. Cookie','我们可能使用Cookie及类似技术来改善服务质量。'],['5. 联系我们','有关隐私的问题，请通过联系表单联系我们。']],
+      es:[['1. Información recopilada','Podemos recopilar: dirección de correo (al iniciar sesión), información de cuenta, datos de idioma (en sincronización) y registros de acceso.'],['2. Finalidad','La información recopilada se usa únicamente para proveer y mejorar el servicio, soporte y procesamiento de pagos. No la vendemos a terceros.'],['3. Almacenamiento de datos','Los datos del plan gratuito se guardan en el almacenamiento local del navegador. Los planes Lite y Pro usan servidores de Firebase (Google LLC).'],['4. Cookies','Podemos usar cookies y tecnologías similares para mejorar la calidad del servicio.'],['5. Contacto','Para preguntas sobre privacidad, usa el formulario de contacto.']],
+    };
+    const s=secs[lang]||secs.jp;
+    const p='font-size:.78rem;color:var(--txs);line-height:1.7;margin-bottom:14px';
+    priv.innerHTML=s.map(([h,b],i)=>`<div class="sh">${h}</div><p style="${i<s.length-1?p:'font-size:.78rem;color:var(--txs);line-height:1.7'}">${b}</p>`).join('');
+  }
+  const termsEl=document.getElementById('terms-body');
+  if(termsEl){
+    const secs={
+      jp:[['1. 利用条件','本サービスは13歳以上の方にご利用いただけます。アカウント登録により本規約に同意したものとみなします。'],['2. 禁止事項','不正アクセス、スパム、著作権侵害、その他の違法行為は禁止されています。'],['3. サービスの変更・中断','当社はサービスの内容を予告なく変更・中断・終了する場合があります。'],['4. 免責事項','当サービスの利用によって生じた損害について、当社は一切の責任を負いません。'],['5. 規約の変更','本規約は予告なく変更される場合があります。変更後の利用をもって同意とみなします。'],['6. 準拠法','本規約は日本法に準拠します。']],
+      en:[['1. Eligibility','You must be 13 or older to use this service. By registering, you agree to these terms.'],['2. Prohibited Activities','Unauthorized access, spam, copyright infringement, and other illegal activities are prohibited.'],['3. Service Changes','We may modify, suspend, or terminate the service without prior notice.'],['4. Disclaimer','We are not liable for any damages arising from use of this service.'],['5. Changes to Terms','These terms may be updated without notice. Continued use constitutes acceptance.'],['6. Governing Law','These terms are governed by the laws of Japan.']],
+      zh:[['1. 使用条件','本服务适用于13岁及以上用户。注册账户即表示同意本条款。'],['2. 禁止事项','禁止未经授权访问、垃圾信息、侵权及其他违法行为。'],['3. 服务变更','我们可能在未事先通知的情况下更改、暂停或终止服务。'],['4. 免责声明','对于因使用本服务而造成的损失，我们不承担任何责任。'],['5. 条款变更','本条款可能在不事先通知的情况下更新。继续使用即表示接受。'],['6. 适用法律','本条款受日本法律管辖。']],
+      es:[['1. Elegibilidad','Debes tener 13 años o más para usar este servicio. Al registrarte, aceptas estos términos.'],['2. Actividades prohibidas','Se prohíben el acceso no autorizado, el spam, la infracción de derechos de autor y otras actividades ilegales.'],['3. Cambios en el servicio','Podemos modificar, suspender o terminar el servicio sin previo aviso.'],['4. Descargo de responsabilidad','No somos responsables de daños derivados del uso de este servicio.'],['5. Cambios en los términos','Estos términos pueden actualizarse sin previo aviso. El uso continuado constituye aceptación.'],['6. Ley aplicable','Estos términos se rigen por las leyes de Japón.']],
+    };
+    const s=secs[lang]||secs.jp;
+    const p='font-size:.78rem;color:var(--txs);line-height:1.7;margin-bottom:14px';
+    termsEl.innerHTML=s.map(([h,b],i)=>`<div class="sh">${h}</div><p style="${i<s.length-1?p:'font-size:.78rem;color:var(--txs);line-height:1.7'}">${b}</p>`).join('');
+  }
+}
+function getTodayPrompt(){
+  const d=new Date();const idx=(d.getFullYear()*366+d.getMonth()*31+d.getDate())%DAILY_PROMPTS.length;
+  return DAILY_PROMPTS[idx];
+}
+function buildDlEd(){
+  const p=_todayScene||getTodayPrompt();
+  return`<div style="margin-bottom:16px">
+<div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">📅 <span data-i18n="todaySentence">${t('todaySentence')}</span></div>
+<div style="font-size:.74rem;color:var(--txs)" data-i18n="sceneHint">${t('sceneHint')}</div>
+</div>
+<div style="padding:12px 16px;border:1px solid var(--acc);border-radius:12px;background:rgba(139,92,246,.08);margin-bottom:8px">
+<div style="font-size:.68rem;color:var(--acc);font-weight:600;margin-bottom:4px" data-i18n="sceneLabel">${t('sceneLabel')}</div>
+<div id="dl-scene-text" style="font-size:.9rem;color:var(--tx);font-weight:600;margin-bottom:6px">${p.scene}</div>
+<div id="dl-scene-hint" style="font-size:.75rem;color:var(--txs);line-height:1.6">${p.hint}</div>
+</div>
+<button class="btn btn-sm btn-gh" style="margin-bottom:14px" onclick="generateScene(true).then(()=>{const b=document.getElementById('dl-scene-text');const h=document.getElementById('dl-scene-hint');if(b&&_todayScene)b.textContent=_todayScene.scene;if(h&&_todayScene)h.textContent=_todayScene.hint;})" data-i18n="sceneNewBtn">${t('sceneNewBtn')}</button>
+<div class="field-block"><label class="fl" data-i18n="writeSentence">${t('writeSentence')}</label><textarea class="inp inp-ta" id="dl-inp" data-i18n-placeholder="scenePlaceholder" placeholder="${t('scenePlaceholder')}" style="min-height:80px" oninput="chkDaily()"></textarea></div>
+<div class="field-block"><label class="fl" data-i18n="sceneJpLabel">${t('sceneJpLabel')}</label><input class="inp" id="dl-jp" data-i18n-placeholder="sceneJpPh" placeholder="${t('sceneJpPh')}"></div>
+<div id="dl-fb" style="margin-bottom:8px"></div>
+<button class="btn btn-p btn-bl" onclick="subDaily()" data-i18n="save">${t('save')}</button>
+<div id="dl-hist" style="margin-top:16px">${(S.sentences||[]).length>0?`<div style="font-size:.72rem;color:var(--txs);margin-bottom:8px">${t('sceneSavedCount')} (${S.sentences.length})</div>`+S.sentences.slice(-5).reverse().map(s=>`<div style="padding:8px 12px;border:1px solid var(--br);border-radius:8px;margin-bottom:6px;font-size:.82rem;color:var(--txs)">${esc(s)}</div>`).join(''):''}
+</div>`;
+}
+function subDaily(){const i=document.getElementById('dl-inp');if(!i?.value.trim()){showToast(t('dailyRequired'),'error');return;}if(!S.sentences)S.sentences=[];S.sentences.push(i.value.trim());S.done.sentence=true;schSave();showToast(t('dailySaved'),'success');i.value='';updateDash();updateDailySent();}
+function chkDaily(){const i=document.getElementById('dl-inp'),fb=document.getElementById('dl-fb');if(!i||!fb)return;const ws=i.value.toLowerCase().split(/\s+/).filter(Boolean),iss=ws.filter(w=>w.length>1&&!S.dictionary.find(d=>(d.word||d.conlang||'').toLowerCase()===w));if(!iss.length)fb.innerHTML=`<div style="padding:10px 14px;border:1px solid var(--okb);border-radius:8px;background:var(--okd);font-size:.78rem;color:var(--ok)">✅ '+t('allWordsInDict')+'</div>`;else fb.innerHTML=`<div style="padding:10px 14px;border:1px solid var(--rsb);border-radius:8px;background:var(--rsd);font-size:.78rem;color:var(--rs)">⚠️ '+t('unregisteredWords')+': ${iss.map(w=>'"'+w+'"').join('、')}</div>`;}
+
+// ---- Script Editor (Character Registration System) ----
+function updateCharMapChar(i,val){updateCharMap(i,'char',val);}
+function buildScEd(){if(!S.script.charMap)S.script.charMap=[];var cm=S.script.charMap;var rows=cm.map(function(e,i){return '<div class="cm-row" id="cm-row-'+i+'"><div class="cm-sound">'+esc(e.sound||'?')+'</div><input class="inp cm-char-inp" type="text" value="'+esc(e.char||'')+'" placeholder="文字" maxlength="8" oninput="updateCharMapChar('+i+',this.value)"><div class="cm-preview" id="cm-pv-'+i+'">'+esc(e.char||'—')+'</div><button class="btn btn-xs btn-r" onclick="delCharMap('+i+')">×</button></div>';}).join('');var tab1='<div class="field-block"><div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-sm btn-p" onclick="autoImportPhonemes()">📥 音素から生成</button><button class="btn btn-sm" onclick="addCharMap()">＋ 行を追加</button></div>'+(cm.length===0?'<div class="empty" style="padding:28px 0"><div style="font-size:2.5rem;opacity:.3;margin-bottom:10px">✍️</div><div style="margin-bottom:4px">まだ文字が登録されていません</div><div style="font-size:.72rem;color:var(--txm);margin-bottom:14px">音素から自動生成するか、行を追加して文字をマッピングしてください</div><button class="btn btn-p" onclick="autoImportPhonemes()">📥 音素から自動生成</button></div>':'<div class="cm-table"><div class="cm-header"><span>音素</span><span>文字</span><span>プレビュー</span><span></span></div>'+rows+'</div>')+'</div>';var tab2='<div class="field-block"><label class="fl">テキスト入力（ローマ字）</label><input class="inp" id="sc-conv-in" placeholder="例：aelindra vael korum" oninput="previewConvert()"></div><div class="field-block"><label class="fl">変換結果（登録した文字で表示）</label><div id="sc-conv-out" style="padding:18px 16px;border:1px solid var(--br);border-radius:10px;min-height:56px;font-size:1.6rem;letter-spacing:.1em;text-align:center;color:var(--ac);word-break:break-all">—</div></div><div style="font-size:.72rem;color:var(--txs);margin-top:8px">「文字マッピング」タブで音素→文字を登録すると変換されます</div>';var selId=S.script.worldScript||'';var tab3='<div style="font-size:.74rem;color:var(--txs);margin-bottom:12px">参考にしたい文字体系をタップすると文字がコピーできます。</div><div class="ws-grid" id="ws-grid">'+WORLD_SCRIPTS.map(function(ws){return '<div class="ws-card'+(selId===ws.id?' sel':'')+'" onclick="selectWorldScript(\''+ws.id+'\')"><div class="ws-name">'+(ws.name[_lang]||ws.name.jp)+'</div><div class="ws-preview">'+ws.preview+'</div></div>';}).join('')+'</div><div id="ws-chars-panel">'+(selId?renderCharPanel(selId):'')+'</div>';return '<div style="margin-bottom:16px"><div style="font-family:\'Cinzel\',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">✍️ 文字体系</div><div style="font-size:.74rem;color:var(--txs)">音素と文字をマッピングして、テキスト変換に活用できます</div></div><div class="tabbar"><button class="tabbtn active" onclick="swTab(this,\'sc-cmap\')">📋 文字マッピング</button><button class="tabbtn" onclick="swTab(this,\'sc-conv\')">🔄 テキスト変換</button><button class="tabbtn" onclick="swTab(this,\'sc-world\')">🌐 世界の文字</button></div><div id="sc-cmap" class="tabpn active">'+tab1+'</div><div id="sc-conv" class="tabpn">'+tab2+'</div><div id="sc-world" class="tabpn">'+tab3+'</div>';}
+
+function addCharMap(){if(!S.script.charMap)S.script.charMap=[];S.script.charMap.push({sound:'',char:''});schSave();var bd=document.getElementById('ed-body');if(bd)bd.innerHTML=buildScEd();}
+function delCharMap(i){if(!S.script.charMap)return;S.script.charMap.splice(i,1);schSave();var bd=document.getElementById('ed-body');if(bd)bd.innerHTML=buildScEd();}
+function updateCharMap(i,field,val){if(!S.script.charMap||!S.script.charMap[i])return;S.script.charMap[i][field]=val;var pv=document.getElementById('cm-pv-'+i);if(pv)pv.textContent=val||'—';schSave();}
+function autoImportPhonemes(){if(!S.script.charMap)S.script.charMap=[];var all=[].concat(S.phoneme.consonants||[]).concat(S.phoneme.vowels||[]);var added=0;all.forEach(function(p){if(!S.script.charMap.find(function(e){return e.sound===p;})){S.script.charMap.push({sound:p,char:''});added++;}});schSave();var bd=document.getElementById('ed-body');if(bd)bd.innerHTML=buildScEd();showToast(added>0?added+'  '+t('phonemesImported'):t('allPhonemesImported'),'success');}
+function previewConvert(){var inp=document.getElementById('sc-conv-in'),out=document.getElementById('sc-conv-out');if(!inp||!out)return;var cm=(S.script.charMap||[]).slice().sort(function(a,b){return(b.sound||'').length-(a.sound||'').length;});var text=inp.value;cm.forEach(function(e){if(e.sound&&e.char)text=text.split(e.sound).join(e.char);});out.textContent=text||'—';}
+function selectWorldScript(id){S.script.worldScript=id;schSave();var p=document.getElementById('ws-chars-panel');if(p)p.innerHTML=renderCharPanel(id);document.querySelectorAll('.ws-card').forEach(function(c){c.classList.toggle('sel',c.getAttribute('onclick').includes(id));});}
+function renderCharPanel(id){var ws=WORLD_SCRIPTS.find(function(w){return w.id===id;});if(!ws)return'';var chars=ws.chars.split(' ').filter(Boolean);return '<div style="margin-top:12px"><div style="font-size:.72rem;font-weight:700;color:var(--pur);margin-bottom:8px">'+(ws.name[_lang]||ws.name.jp)+' — タップして追加</div><div class="char-grid">'+chars.map(function(c){return '<button class="char-btn" onclick="insertCharToMap(\''+c+'\')">'+c+'</button>';}).join('')+'</div></div>';}
+function insertCharToMap(c){var bd=document.getElementById('ed-body');var activeInp=bd?bd.querySelector('.cm-char-inp:focus'):null;if(activeInp){activeInp.value+=c;var rows=bd.querySelectorAll('.cm-row');var i=Array.from(rows).findIndex(function(r){return r.querySelector('.cm-char-inp')===activeInp;});if(i>=0)updateCharMap(i,'char',activeInp.value);}try{navigator.clipboard.writeText(c).then(function(){showToast('"'+c+'" をコピーしました','success');});}catch(e){showToast('"'+c+'" をコピーしました','success');}}
+
+
+// ---- Vibe Editor ----
+function buildVbEd(){const v=S.vibe||{};const GN=['ファンタジー','SF','和風','アジア','中世欧州','古代','未来','宇宙','精霊/自然','その他'];const MD=['神秘的','力強い','優美','古風','機械的','柔らかい','鋭い','荘厳'];return`<div style="margin-bottom:16px"><div style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">🌌 ${t('vibe')}</div><div style="font-size:.74rem;color:var(--txs)">言語のムードや世界観を設定します</div></div>
+<div class="field-block"><label class="fl">${t('genre')}</label><div style="display:flex;flex-wrap:wrap;gap:6px">${GN.map(g=>`<button class="btn btn-sm ${v.genre===g?'btn-p':''}" onclick="setVB('genre','${g}',this)">${g}</button>`).join('')}</div></div>
+<div class="field-block"><label class="fl">${t('mood')}</label><div style="display:flex;flex-wrap:wrap;gap:6px">${MD.map(m=>`<button class="btn btn-sm ${v.mood===m?'btn-p':''}" onclick="setVB('mood','${m}',this)">${m}</button>`).join('')}</div></div>
+<div class="field-block"><label class="fl">${t('region')}</label><input type="text" class="inp" id="vb-reg" placeholder="例：北欧の深い森、宇宙ステーション" oninput="S.vibe.region=this.value;schSave()" value="${v.region||''}"></div>
+<div class="field-block"><label class="fl">${t('vibeNotes')}</label><textarea class="inp inp-ta" placeholder="言語のコンセプト、話す民族・種族…" oninput="S.vibe.notes=this.value;schSave()">${v.notes||''}</textarea></div>`;}
+function setVB(k,v,btn){if(!S.vibe)S.vibe={};S.vibe[k]=v;btn.closest('.field-block').querySelectorAll('.btn').forEach(b=>b.classList.remove('btn-p'));btn.classList.add('btn-p');schSave();}
+
+// ---- Editor ----
+function openEditor(type){_ced=type;const ov=document.getElementById('ed-ov'),tl=document.getElementById('ed-title'),bd=document.getElementById('ed-body');const TITLES={phoneme:'🎵 '+t('phonology'),vocab:'📖 '+t('vocabulary'),grammar:'📐 '+t('grammar'),corpus:'📝 '+t('corpusTitle'),daily:'📅 1日1文',script:'✍️ '+t('script'),vibe:'🌌 '+t('vibe')};tl.textContent=TITLES[type]||type;bd.innerHTML=buildEB(type);ov.classList.add('open');document.body.style.overflow='hidden';}
+function closeEditor(){document.getElementById('ed-ov').classList.remove('open');document.body.style.overflow='';_ced=null;_updateUI();renderVocab();}
+function buildEB(t){switch(t){case 'phoneme':return buildPhEd();case 'vocab':return buildVcEd();case 'grammar':return buildGrEd();case 'corpus':return buildCpEd();case 'daily':return buildDlEd();case 'script':return buildScEd();case 'vibe':return buildVbEd();default:return '<p style="color:var(--txs)">'+t('comingSoon')+'</p>';}}
+
+// ---- Tabs ----
+function swTab(btn,pid){const par=btn.closest('.eo')||document.getElementById('ed-body');if(!par)return;par.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));par.querySelectorAll('.tabpn').forEach(p=>p.classList.remove('active'));btn.classList.add('active');const p=document.getElementById(pid);if(p)p.classList.add('active');}
+
+// ---- Library ----
+const LIB=[
+  {id:'1',name:'シルヴァリ語',native:'Silvari',genre:'ファンタジー',desc:'北方のエルフ族が話す優美な言語。摩擦音と流音を多用し、詩的な表現に富む。',words:142,author:'starweaver'},
+  {id:'2',name:'カアナ語',native:"Ka'ana",genre:'SF',desc:'宇宙船の乗組員が使う共通語。単純な音節構造と機能的な文法を持つ。',words:89,author:'cosmos_builder'},
+  {id:'3',name:'テオク語',native:'Teoc',genre:'古代',desc:'失われた古代文明の言語。複雑な格変化と動詞の時制体系を持つ。',words:203,author:'ancient_tongue'},
+  {id:'4',name:'ミラ語',native:'Mira',genre:'和風',desc:'山岳地帯に住む精霊と人間が共に使う言語。日本語の影響を受けた音節構造。',words:67,author:'mira_lang'},
+  {id:'5',name:'ドラコン語',native:'Dracon',genre:'ファンタジー',desc:'竜族の言語。硬い破裂音と摩擦音が特徴。短く力強い表現が多い。',words:55,author:'dragon_lore'},
+];
+function renderLib(q=''){const g=document.getElementById('lib-grid');if(!g)return;const f=q.toLowerCase().trim();let items=[...LIB];if(S.langName&&S.visibility==='public'&&S.dictionary.length>0){const ul={id:'user',name:S.langName,native:S.langNative||S.langName,genre:S.vibe?.genre||t('notSet'),desc:S.vibe?.notes||t('ownLangDesc'),words:S.dictionary.length,author:_au?.name||t('you'),isOwn:true};if(!f||ul.name.toLowerCase().includes(f)||ul.genre.toLowerCase().includes(f))items=[ul,...items];}if(f)items=items.filter(l=>l.name.toLowerCase().includes(f)||l.native.toLowerCase().includes(f)||l.genre.toLowerCase().includes(f)||l.desc.toLowerCase().includes(f));g.innerHTML=items.length?items.map(l=>`<div class="lbc">${l.isOwn?'<div style="font-size:.62rem;color:var(--ok);margin-bottom:6px">'+t('yourLang')+'</div>':''}<div class="lbn">${esc(l.name)}</div>${l.native?'<div style="font-size:.78rem;color:var(--ac2);margin-bottom:4px;font-style:italic">'+esc(l.native)+'</div>':''}<span class="lbg">${esc(l.genre)}</span><div class="lbd">${esc(l.desc)}</div><div class="lbm"><span>📖 ${l.words} '+t('wordUnit')+'</span><span>👤 ${esc(l.author)}</span></div></div>`).join(''):'<div class="empty"><div style="font-size:2rem;margin-bottom:8px;opacity:.4">🌿</div><div>'+t('noResults')+'</div></div>';}
+
+// ---- Memo ----
+function initMDB(){if(!window.indexedDB)return;const r=indexedDB.open(MDBNAME,1);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(MSTORE)){const s=d.createObjectStore(MSTORE,{keyPath:'id'});s.createIndex('updatedAt','updatedAt');}};r.onsuccess=e=>{_mdb=e.target.result;loadMemos();};r.onerror=()=>console.warn('IndexedDB unavailable');}
+function dbGetAll(fn){if(!_mdb)return fn([]);const tx=_mdb.transaction(MSTORE,'readonly');const st=tx.objectStore(MSTORE);const r=st.getAll();r.onsuccess=()=>fn(r.result.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)));r.onerror=()=>fn([]);}
+function loadMemos(){dbGetAll(ms=>{const le=document.getElementById('memo-list');if(!le)return;if(!ms.length){le.innerHTML='<div class="empty"><div style="font-size:2rem;margin-bottom:10px;opacity:.4">📝</div><div>メモがありません</div><button class="btn btn-p" style="margin-top:12px" onclick="openMemoNew()">'+t('createFirstMemo')+'</button></div>';return;}le.innerHTML=ms.map(m=>`<div class="memc" onclick="openMemoEd('${m.id}')"><div class="memct">${esc(m.title||t('untitled'))}</div><div class="memcb">${esc(m.body||'')}</div><div class="memcd">${new Date(m.updatedAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`).join('');});}
+function openMemoNew(){_meid=null;document.getElementById('memo-title-inp').value='';document.getElementById('memo-body-inp').value='';document.getElementById('memo-del-btn').style.display='none';document.getElementById('memo-ov').classList.add('open');}
+function openMemoEd(id){dbGetAll(ms=>{const m=ms.find(x=>x.id===id);if(!m)return;_meid=id;document.getElementById('memo-title-inp').value=m.title||'';document.getElementById('memo-body-inp').value=m.body||'';document.getElementById('memo-del-btn').style.display='inline-flex';document.getElementById('memo-ov').classList.add('open');});}
+function closeMemoEd(){document.getElementById('memo-ov').classList.remove('open');loadMemos();}
+function saveMemo(){const ti=document.getElementById('memo-title-inp').value.trim()||'無題',bd=document.getElementById('memo-body-inp').value;const id=_meid||('m-'+Date.now()+'-'+Math.random().toString(36).slice(2,8));const m={id,title:ti,body:bd,updatedAt:new Date().toISOString()};if(!_mdb){showToast(t('dbError'),'error');return;}const tx=_mdb.transaction(MSTORE,'readwrite');tx.objectStore(MSTORE).put(m);tx.oncomplete=()=>{closeMemoEd();showToast(t('memoSaved'),'success');};tx.onerror=()=>showToast(t('saveFailed'),'error');}
+function delMemo(){if(!_meid||!_mdb)return;if(!confirm(t('memoDeleteConfirm')))return;const tx=_mdb.transaction(MSTORE,'readwrite');tx.objectStore(MSTORE).delete(_meid);tx.oncomplete=()=>{closeMemoEd();showToast(t('deleted'),'info');};}
+
+// ---- AI Chat ----
+function getAILim(){if(_isPro&&_plan==='pro')return 9999;if(_isPro&&_plan==='lite')return 50;return 10;}
+function chkAILim(){const t=new Date().toDateString();if(_aiDate!==t){_aiDate=t;_aiCnt=0;}return _aiCnt<getAILim();}
+function updAILimUI(){const e=document.getElementById('ai-lim');if(!e)return;const l=getAILim(),r=l-_aiCnt;if(l>=9999){e.textContent=t('unlimited');e.style.color='var(--ok)';}else{e.textContent='残り '+Math.max(0,r)+'/'+l+' 回';e.style.color=r<=3?'var(--rs)':'var(--txm)';}}
+function initAI(){const m=document.getElementById('chat-msgs');if(!m)return;
+  const L=_lang||'jp';
+  const greetings={
+    jp:S.langName?'こんにちは！「'+S.langName+'」の制作、頑張っていますね！何でも相談してください。':'こんにちは！コンラング制作のAIアドバイザーです。どんな言語を作りますか？',
+    en:S.langName?'Hello! Great work on "'+S.langName+'"! Ask me anything.':'Hello! I\'m your conlang AI advisor. What language are you building?',
+    zh:S.langName?'你好！"'+S.langName+'"进展不错！有任何问题请告诉我。':'你好！我是你的人造语AI顾问。你在制作什么样的语言？',
+    es:S.langName?'¡Hola! ¡Buen trabajo en "'+S.langName+'"! Pregúntame lo que sea.':'¡Hola! Soy tu asesor IA de conlangs. ¿Qué idioma estás creando?',
+  };
+  const g=greetings[L]||greetings.jp;
+  _aihist=[];m.innerHTML='<div class="cb ai"><div class="cbi">'+g+'</div></div>';renderSugs();updAILimUI();}
+function renderSugs(){const e=document.getElementById('csug');if(!e)return;const cs=[t('aiSug1'),t('aiSug2'),t('aiSug3'),t('aiSug4'),t('aiSug5')];e.innerHTML=cs.map(c=>`<div class="sc" onclick="sendSug('${esc(c)}')">${c}</div>`).join('');}
+function sendSug(tx){const i=document.getElementById('chat-inp');if(i)i.value=tx;sendChat();}
+async function sendChat(){const inp=document.getElementById('chat-inp');if(!inp?.value.trim())return;const um=inp.value.trim();inp.value='';if(!chkAILim()){showToast(t('aiLimitReached'),'error');openUpgrade();return;}const m=document.getElementById('chat-msgs');if(!m)return;m.innerHTML+='<div class="cb u"><div class="cbi">'+esc(um)+'</div></div>';const tid='t-'+Date.now();m.innerHTML+='<div class="cb ai" id="'+tid+'"><div class="cbi"><span class=\"spinning\">⟳</span> '+t('aiThinking')+'</div></div>';m.scrollTop=m.scrollHeight;_aihist.push({role:'user',content:um});_aiCnt++;updAILimUI();try{const r=await aiReply(um);const te=document.getElementById(tid);if(te)te.querySelector('.cbi').textContent=r;_aihist.push({role:'assistant',content:r});m.scrollTop=m.scrollHeight;}catch(e){const te=document.getElementById(tid);if(te)te.querySelector('.cbi').textContent=t('aiError');}}
+async function aiReply(msg){
+  await new Promise(r=>setTimeout(r,900+Math.random()*600));
+  const ml=msg.toLowerCase(),w=S.dictionary?.length||0,p=(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0);
+  const lang=_lang||'jp';
+  const R={
+    jp:{
+      start:'言語制作は【音韻→語彙→文法】の順がおすすめです。まず音素（子音5〜10個、母音3〜5個）を決めると、その音から自然な単語が生まれます。音韻タブから始めてみてください！',
+      phonHas:n=>`現在${n}個の音素があります。バランスとしては子音8〜12個、母音4〜6個が扱いやすいです。音節構造（CV, CVC）も決めると単語の形が統一されます。`,
+      phonNone:'音韻から始めましょう！IPAの中から気に入ったものを選ぶと、言語の個性が生まれます。エルフ系なら「l, r, n, s, ae, i, o」など。',
+      vocabHas:n=>`語彙${n}語、いいペースです！次は反意語や派生語を作るといいですよ。「愛→愛する→愛される」など関連語を増やすと語彙が自然に広がります。`,
+      vocabNone:'語彙は「100語リスト」から始めましょう。体の部位、数字、基本動詞（行く・来る・食べる・見る）を先に揃えると、どんな文でも作れるようになります。',
+      script:'世界の文字体系（ルーン、ゲエズ、キリル等）をインスピレーションに使いましょう！文字体系タブで世界の文字を参照できます。',
+      grammar:'語順はSOV（日本語型）が初心者に作りやすいです。時制は最初は「過去/現在/未来」だけで十分。格変化はなくしてもいい。まずシンプルに、後から複雑にするのがコツです。',
+      vibe:'言語のムードが決まると単語の形が統一されます。「神秘的・エルフ系」なら柔らかい摩擦音（s, l, f, v）を多用、「力強い・戦士系」なら破裂音（k, t, p, g）を主体にすると雰囲気が出ます。',
+      fallback:(w,p,next)=>`面白い質問ですね！現在の状況（語彙:${w}語、音素:${p}個）を活かして、次は${next}をおすすめします。`,
+      next10:'語彙を10語まで増やすこと', next50:'例文を1文作ること', nextGr:'文法の整理',
+    },
+    en:{
+      start:'Start with phonology → vocabulary → grammar. Define 5-10 consonants and 3-5 vowels first — natural words will emerge from those sounds. Try the Phonology tab!',
+      phonHas:n=>`You have ${n} phonemes. A good balance is 8-12 consonants, 4-6 vowels. Setting a syllable structure (CV, CVC) will unify your word shapes.`,
+      phonNone:'Start with phonology! Choose sounds from IPA that feel right. Elven-style: l, r, n, s, ae, i, o. Warrior-style: k, t, g, r.',
+      vocabHas:n=>`${n} words — great pace! Next, try antonyms and derivations. "love → to love → beloved" expands vocabulary naturally.`,
+      vocabNone:'Start with a 100-word list: body parts, numbers, core verbs (go, come, eat, see). Once you have those, you can build any sentence.',
+      script:'Use world writing systems (Runic, Ge\'ez, Cyrillic) as inspiration! Browse them in the Script tab.',
+      grammar:'SOV word order (like Japanese) is easiest for beginners. Start with just past/present/future tense. You can always add complexity later.',
+      vibe:'Once you fix the mood, word shapes unify. Mystical/elven → soft fricatives (s, l, f, v). Warrior-style → stops (k, t, p, g).',
+      fallback:(w,p,next)=>`Interesting question! Given your current state (vocab: ${w} words, phonemes: ${p}), I suggest: ${next}.`,
+      next10:'grow vocabulary to 10 words', next50:'write one example sentence', nextGr:'organize your grammar',
+    },
+    zh:{
+      start:'建议按照【音韵→词汇→语法】的顺序制作语言。先定义5-10个辅音和3-5个元音，自然的词汇会从中产生。从音韵标签开始吧！',
+      phonHas:n=>`您目前有${n}个音素。建议辅音8-12个，元音4-6个。设定音节结构（CV, CVC）可以统一词形。`,
+      phonNone:'从音韵开始！从IPA中选择喜欢的音素，语言的个性就会出现。精灵风格：l, r, n, s, ae, i, o。',
+      vocabHas:n=>`${n}个词汇，进展不错！接下来可以创造反义词和派生词，自然扩展词汇量。`,
+      vocabNone:'从100词列表开始：身体部位、数字、基本动词（去、来、吃、看）。有了这些就能造任何句子。',
+      script:'可以从世界文字体系（如尼文、埃塞俄比亚文、西里尔字母）中获取灵感！在文字标签中浏览。',
+      grammar:'SOV语序（像日语）对初学者最容易。时态只需过去/现在/未来三种即可，格变化可以省略，先简单后复杂。',
+      vibe:'确定语言氛围后，词形会趋于统一。神秘精灵风：柔和擦音（s, l, f, v）；战士风：爆破音（k, t, p, g）。',
+      fallback:(w,p,next)=>`有趣的问题！根据您目前的状态（词汇：${w}个，音素：${p}个），建议下一步：${next}。`,
+      next10:'将词汇增加到10个', next50:'写一个例句', nextGr:'整理语法',
+    },
+    es:{
+      start:'Empieza con fonología → vocabulario → gramática. Define 5-10 consonantes y 3-5 vocales primero — las palabras surgirán naturalmente. ¡Prueba la pestaña Fonología!',
+      phonHas:n=>`Tienes ${n} fonemas. Un buen balance: 8-12 consonantes, 4-6 vocales. Definir una estructura silábica (CV, CVC) unificará tus palabras.`,
+      phonNone:'¡Empieza por la fonología! Elige sonidos del IPA. Estilo élfico: l, r, n, s, ae, i, o. Estilo guerrero: k, t, g, r.',
+      vocabHas:n=>`${n} palabras — ¡buen ritmo! Prueba con antónimos y derivaciones para expandir el léxico naturalmente.`,
+      vocabNone:'Empieza con 100 palabras: partes del cuerpo, números, verbos básicos (ir, venir, comer, ver). Con eso puedes construir cualquier frase.',
+      script:'¡Usa sistemas de escritura del mundo (rúnico, ge\'ez, cirílico) como inspiración! Encuéntralos en la pestaña Escritura.',
+      grammar:'El orden SOV (como el japonés) es el más fácil para empezar. Solo necesitas pasado/presente/futuro. Puedes añadir complejidad después.',
+      vibe:'Una vez que fijes el ambiente, las formas de las palabras se unifican. Místico/élfico → fricativas suaves (s, l, f, v). Guerrero → oclusivas (k, t, p, g).',
+      fallback:(w,p,next)=>`¡Pregunta interesante! Con tu estado actual (léxico: ${w} palabras, fonemas: ${p}), te sugiero: ${next}.`,
+      next10:'aumentar vocabulario a 10 palabras', next50:'escribir una frase de ejemplo', nextGr:'organizar la gramática',
+    },
+  };
+  const r=R[lang]||R.jp;
+  const kw={
+    jp:{start:['最初','始め','何から'],phon:['音韻','音素','発音'],vocab:['語彙','単語','辞書'],script:['文字','スクリプト'],grammar:['文法','語順','時制'],vibe:['世界観','ジャンル','雰囲気']},
+    en:{start:['start','begin','first','how to'],phon:['phonology','phoneme','sound','pronunciation'],vocab:['vocab','word','dictionary','lexicon'],script:['script','writing','character'],grammar:['grammar','order','tense','syntax'],vibe:['vibe','genre','mood','atmosphere']},
+    zh:{start:['开始','怎么','先'],phon:['音韵','音素','发音'],vocab:['词汇','单词','词典'],script:['文字','字母'],grammar:['语法','语序','时态'],vibe:['世界观','风格','氛围']},
+    es:{start:['empezar','inicio','primero','qué'],phon:['fonología','fonema','sonido'],vocab:['léxico','palabra','vocabulario','diccionario'],script:['escritura','carácter','script'],grammar:['gramática','orden','tiempo','sintaxis'],vibe:['ambiente','género','estilo']},
+  };
+  const kl=kw[lang]||kw.jp;
+  if(kl.start.some(k=>ml.includes(k)))return r.start;
+  if(kl.phon.some(k=>ml.includes(k)))return p>0?r.phonHas(p):r.phonNone;
+  if(kl.vocab.some(k=>ml.includes(k)))return w>0?r.vocabHas(w):r.vocabNone;
+  if(kl.script.some(k=>ml.includes(k)))return r.script;
+  if(kl.grammar.some(k=>ml.includes(k)))return r.grammar;
+  if(kl.vibe.some(k=>ml.includes(k)))return r.vibe;
+  const next=w<10?r.next10:w<50?r.next50:r.nextGr;
+  return r.fallback(w,p,next);
+}
+
+// ---- FAQ ----
+const FAQ=[{q:'Linguaとは何ですか？',a:'Linguaは、架空言語（コンラング）を設計・管理するための本格ツールです。音韻、語彙、文法、文字体系を一つのアプリで管理できます。'},{q:'無料でどこまで使えますか？',a:'無料プランでは1言語まで、AI会話10回/日、ローカル保存が利用できます。Proプランではすべての機能が無制限になります。'},{q:'Violaとは何ですか？',a:'ViolaはLinguaと連携するSNSサービスです。自分のコンラングを他のユーザーとシェアしたり、コンランガーのコミュニティとつながれます。設定ページから連携を設定できます。'},{q:'データはどこに保存されますか？',a:'ゲスト・無料プランではブラウザのローカルストレージに保存されます。Proプランではクラウド（Firestore）に自動同期されます。'},{q:'スマートフォンでも使えますか？',a:'はい！モバイルファーストで設計されており、iPhoneやAndroidのブラウザでも快適に動作します。セーフエリアにも対応しています。'},{q:'決済は安全ですか？',a:'Stripeを使用した安全な決済です。カード情報はStripeが管理し、Linguaのサーバーには一切保存されません。いつでもキャンセル可能です。'},{q:'キャンセルはできますか？',a:'はい、いつでもキャンセル可能です。キャンセル後も月末まで引き続きご利用いただけます。'}];
+function renderFaq(){const e=document.getElementById('faq-list');if(!e)return;e.innerHTML=FAQ.map((f,i)=>`<div class="fqi"><div class="fqq" onclick="togFaq(${i},this)"><span>${f.q}</span><span id="fa-${i}">▾</span></div><div class="fqa" id="fa-a-${i}">${f.a}</div></div>`).join('');}
+function togFaq(i,btn){const a=document.getElementById('fa-a-'+i),ar=document.getElementById('fa-'+i);if(!a)return;a.classList.toggle('open');if(ar)ar.textContent=a.classList.contains('open')?'▴':'▾';}
+
+// ---- Contact Form ----
+function renderContactForm(){
+  const sel=document.getElementById('ct-type');
+  if(!sel)return;
+  const options=[
+    {value:'bug',icon:'🐛',label:{jp:'バグ報告',en:'Bug Report',zh:'错误报告',es:'Informe de error'}},
+    {value:'request',icon:'✨',label:{jp:'機能リクエスト',en:'Feature Request',zh:'功能请求',es:'Solicitud de función'}},
+    {value:'question',icon:'❓',label:{jp:'質問',en:'Question',zh:'问题',es:'Pregunta'}},
+    {value:'other',icon:'💬',label:{jp:'その他',en:'Other',zh:'其他',es:'Otro'}}
+  ];
+  sel.innerHTML=options.map(o=>`<option value="${o.value}">${o.icon} ${o.label[_lang]||o.label.jp}</option>`).join('');
+}
+
+// ---- Contact ----
+async function submitContact(){
+  const type=document.getElementById('ct-type')?.value||'other';
+  const email=document.getElementById('ct-email')?.value.trim();
+  const msg=document.getElementById('ct-msg')?.value.trim();
+  if(!email){showToast(t('contactEmailRequired'),'error');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast(t('contactEmailInvalid'),'error');return;}
+  if(!msg){showToast(t('contactMsgRequired'),'error');return;}
+  const btn=document.querySelector('#page-contact .btn-p');
+  if(btn){btn.disabled=true;btn.textContent=t('contactSending');}
+  try{
+    if(window.FB?.addDoc){
+      await window.FB.addDoc(window.FB.collection(window.FB.db,'contacts'),{
+        type,email,message:msg,
+        uid:_au?.uid||null,
+        langName:S.langName||'',
+        createdAt:new Date().toISOString()
+      });
+    }
+    document.getElementById('ct-email').value='';
+    document.getElementById('ct-msg').value='';
+    showToast(t('contactSuccess'),'success');
+  }catch(e){
+    showToast(t('contactFail'),'error');
+  }finally{
+    if(btn){btn.disabled=false;btn.setAttribute('data-i18n','send');btn.textContent=t('send');}
+  }
+}
+
+// ---- Util ----
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function openVocabEditor(){goTo('vocab');switchVocabTab('add',document.getElementById('vtab-add-btn'));}
+function spkC(el){const idx=parseInt(el.dataset.idx);if(!isNaN(idx)&&S.corpus[idx]){const t=S.corpus[idx].cl||S.corpus[idx].conlang||'';spk(t);}}
+function spk(tx){if(!tx||!window.speechSynthesis)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(tx);u.lang='en-US';u.rate=0.8;window.speechSynthesis.speak(u);}
+window.goTo=goTo;window.openEditor=openEditor;window.closeEditor=closeEditor;window.openLogin=openLogin;window.closeLogin=closeLogin;window.openUpgrade=openUpgrade;
+console.log('✅ Lingua ready');
+</script>
+</body></html>
