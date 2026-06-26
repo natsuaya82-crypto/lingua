@@ -32,7 +32,6 @@ button,a,.word-card,.bnav-btn{-webkit-tap-highlight-color:transparent;cursor:poi
   --glow:none;
 }
 html{background:var(--bg)}
-html,body{overflow-x:hidden;max-width:100%}
 body{background:var(--bg);color:var(--tx);font-family:'Crimson Pro','Noto Sans JP',serif;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior:none;-webkit-overflow-scrolling:touch;}
 body>*{position:relative;z-index:1}
 
