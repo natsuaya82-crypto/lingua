@@ -609,3 +609,16 @@ textarea.inp{line-height:1.7}
   .pi,.prof-wrap{max-width:1320px}
   .eo>*,.memo-ov>*{max-width:1320px}
 }
+
+/* ===== DASHBOARD WORKSPACE ===== */
+.dash-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.dash-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+@media(min-width:1024px){
+  .dash-grid{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:24px;align-items:start}
+  .dash-main .mg{grid-template-columns:repeat(2,1fr)}
+  .dash-side{position:sticky;top:24px}
+  .dash-side .total-pts{flex-wrap:wrap}
+}
+@media(min-width:1500px){
+  .dash-main .mg{grid-template-columns:repeat(3,1fr)}
+}
