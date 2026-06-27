@@ -81,14 +81,25 @@ function previewConvert(){const inp=document.getElementById('sc-conv-in'),out=do
 // Returns safe HTML in both cases (renderGlyphs and esc both escape). Used by vocab/corpus/daily renderers.
 function glyphText(s){return _glyphView?renderGlyphs(s):esc(s||'');}
 function hasGlyphs(){return (S.script?.charMap||[]).some(e=>e&&e.sound&&(e.svg||e.char));}
+// Re-render everywhere conlang text appears so the custom-script view is consistent across the app.
+function renderGlyphViews(){
+  if(typeof renderVocab==='function')renderVocab();
+  const vl=document.getElementById('vc-list');if(vl&&typeof wCardHtml==='function')vl.innerHTML=S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');
+  if(typeof renderVcRecent==='function')renderVcRecent();
+  const cl=document.getElementById('ctab-list');if(cl&&typeof ccHtml==='function')cl.innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('');
+  if(typeof updateDailySent==='function')updateDailySent();
+}
+// Show the topbar toggle only when a script is registered; reflect on/off state on every .glyph-toggle button.
+function updateGlyphToggle(){
+  const has=hasGlyphs();
+  const tb=document.getElementById('glyph-topbar-btn');if(tb)tb.style.display=has?'inline-flex':'none';
+  document.querySelectorAll('.glyph-toggle').forEach(b=>{b.classList.toggle('act',_glyphView);b.setAttribute('aria-pressed',_glyphView?'true':'false');});
+}
 function toggleGlyphView(){
   _glyphView=!_glyphView;
   try{localStorage.setItem('lingua_glyphview',_glyphView?'1':'0');}catch(e){}
-  if(typeof renderVocab==='function')renderVocab();
-  const vl=document.getElementById('vc-list');if(vl&&typeof wCardHtml==='function')vl.innerHTML=S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');
-  const cl=document.getElementById('ctab-list');if(cl&&typeof ccHtml==='function')cl.innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('');
-  if(typeof updateDailySent==='function')updateDailySent();
-  document.querySelectorAll('.glyph-toggle').forEach(b=>{b.classList.toggle('act',_glyphView);b.setAttribute('aria-pressed',_glyphView?'true':'false');});
+  renderGlyphViews();
+  updateGlyphToggle();
 }
 window.toggleGlyphView=toggleGlyphView;
 

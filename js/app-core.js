@@ -112,10 +112,12 @@ const IPA_V=[{g:'前舌',s:['i','e','ɛ','æ','a','y','ø','œ']},{g:'中舌',s:
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded',()=>{
   try{const sl=localStorage.getItem('lingua_lang');if(sl)_lang=sl;}catch(e){}
-  try{_glyphView=localStorage.getItem('lingua_glyphview')==='1';}catch(e){}
+  try{const gv=localStorage.getItem('lingua_glyphview');if(gv!==null)_glyphView=gv==='1';}catch(e){}
   const bar=document.getElementById('load-bar');
   if(bar){bar.style.width='40%';setTimeout(()=>bar.style.width='80%',300);}
   loadState();
+  // Default ON when a script is registered and the user hasn't set a preference yet.
+  try{if(localStorage.getItem('lingua_glyphview')===null&&typeof hasGlyphs==='function'&&hasGlyphs())_glyphView=true;}catch(e){}
   try{const s=localStorage.getItem(AKEY);if(s)_au=JSON.parse(s);}catch(e){}
   const fbPoll=setInterval(()=>{
     if(window.FB?.onAuthStateChanged&&window.FB.auth){
@@ -140,7 +142,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(ap)ap.style.display='block';
       applyLang();renderLangPills();
       _updateUI();initMDB();renderFaq();renderLib();renderVocab();renderRoadmap();
-      if(_glyphView)document.querySelectorAll('.glyph-toggle').forEach(b=>{b.classList.add('act');b.setAttribute('aria-pressed','true');});
+      if(typeof updateGlyphToggle==='function')updateGlyphToggle();
       generateScene();
     },300);
   },800);
@@ -149,7 +151,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ---- State ----
 function saveState(){try{localStorage.setItem(SKEY,JSON.stringify(S));}catch(e){}}
 function loadState(){try{const r=localStorage.getItem(SKEY);if(!r)return;const p=JSON.parse(r);Object.keys(DS).forEach(k=>{if(k in p)S[k]=p[k];});}catch(e){}}
-function schSave(){clearTimeout(_dsTimer);_dsTimer=setTimeout(()=>{saveState();showAS(t('autoSaved'));if(_au?.uid&&_isPro)schFSSave();renderRoadmap();},700);}
+function schSave(){clearTimeout(_dsTimer);_dsTimer=setTimeout(()=>{saveState();showAS(t('autoSaved'));if(_au?.uid&&_isPro)schFSSave();renderRoadmap();if(typeof updateGlyphToggle==='function')updateGlyphToggle();},700);}
 function showAS(m){const e=document.getElementById('autosave-el');if(!e)return;e.innerHTML=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
 let _fsT=null;
 function schFSSave(){clearTimeout(_fsT);_fsT=setTimeout(()=>saveFSState(),2000);}
