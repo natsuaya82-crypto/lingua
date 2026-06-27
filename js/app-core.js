@@ -4,7 +4,7 @@
 const SKEY='lingua_v2';const AKEY='lingua_auth';const MDBNAME='LinguaMemos';const MSTORE='memos';
 const DS={langName:'',langNative:'',phoneme:{consonants:[],vowels:[]},syllable:{onset:[],nucleus:[],coda:[]},dictionary:[],grammar:{order:'',tense:'',cases:[],notes:'',chapters:{},topicProm:'',number:'',aspect:'',mood:'',adjPos:'',adjAgree:''},corpus:[],sentences:[],script:{romanization:'',rules:'',worldScript:'',charMap:[]},vibe:{genre:'',mood:'',region:'',notes:''},visibility:'private',done:{}};
 let S=JSON.parse(JSON.stringify(DS));
-let _au=null,_plan='free',_isPro=false,_ced=null,_pf='all',_meid=null,_aihist=[],_aiCnt=0,_aiDate='',_dsTimer=null,_pdata={},_mdb=null,_lang='jp',_grChap='greet';
+let _au=null,_plan='free',_isPro=false,_ced=null,_pf='all',_meid=null,_aihist=[],_aiCnt=0,_aiDate='',_dsTimer=null,_pdata={},_mdb=null,_lang='jp',_grChap='greet',_glyphView=false;
 
 
 function t(k){return i18n[_lang]?.[k]??i18n.jp[k]??k;}
@@ -42,7 +42,7 @@ function updateDailySent(){
                (S.corpus?.length>0)?(S.corpus[S.corpus.length-1]?.cl||S.corpus[S.corpus.length-1]?.conlang||null):null;
   const shareBtn=document.getElementById('viola-share-btn');
   if(latest&&latest.trim()){
-    ds.textContent=latest;ds.style.color='var(--tx)';
+    ds.innerHTML=glyphText(latest);ds.style.color='var(--tx)';
     if(shareBtn)shareBtn.style.display='inline-flex';
   }else{
     ds.textContent=t('sceneHint')||'今日のシーンをコンラングで表現してみよう';ds.style.color='var(--txm)';
@@ -112,6 +112,7 @@ const IPA_V=[{g:'前舌',s:['i','e','ɛ','æ','a','y','ø','œ']},{g:'中舌',s:
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded',()=>{
   try{const sl=localStorage.getItem('lingua_lang');if(sl)_lang=sl;}catch(e){}
+  try{_glyphView=localStorage.getItem('lingua_glyphview')==='1';}catch(e){}
   const bar=document.getElementById('load-bar');
   if(bar){bar.style.width='40%';setTimeout(()=>bar.style.width='80%',300);}
   loadState();
@@ -139,6 +140,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(ap)ap.style.display='block';
       applyLang();renderLangPills();
       _updateUI();initMDB();renderFaq();renderLib();renderVocab();renderRoadmap();
+      if(_glyphView)document.querySelectorAll('.glyph-toggle').forEach(b=>{b.classList.add('act');b.setAttribute('aria-pressed','true');});
       generateScene();
     },300);
   },800);

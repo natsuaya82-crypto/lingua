@@ -8,6 +8,10 @@
 .glyph{display:inline-block;vertical-align:middle;width:1em;height:1em;line-height:1;margin:0 .05em}
 .glyph svg{width:100%;height:100%;display:block}
 .glyph-box{display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em}
+/* Custom-script display toggle (vocab/corpus/daily render conlang text in registered glyphs) */
+.glyph-toggle.act{background:var(--acd);border-color:var(--acb);color:var(--ac)}
+.wm .glyph,.ccl .glyph{width:1.15em;height:1.15em;color:var(--ac)}
+#d-sent .glyph{width:1.2em;height:1.2em;color:var(--ac)}
 .glyph-box svg{width:100%;height:100%;max-width:1.6em;max-height:1.6em}
 .glyph-preview{padding:18px;border:1px solid var(--br);border-radius:10px;background:var(--sf2);min-height:80px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;color:var(--pur)}
 .glyph-preview svg{width:2.4rem;height:2.4rem}

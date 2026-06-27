@@ -77,6 +77,20 @@ function renderGlyphs(text){
   return tokens.join('');
 }
 function previewConvert(){const inp=document.getElementById('sc-conv-in'),out=document.getElementById('sc-conv-out');if(!inp||!out)return;out.innerHTML=renderGlyphs(inp.value)||'—';}
+// Display helper: render conlang text either in registered glyphs (when the custom-script view is on) or as plain roman text.
+// Returns safe HTML in both cases (renderGlyphs and esc both escape). Used by vocab/corpus/daily renderers.
+function glyphText(s){return _glyphView?renderGlyphs(s):esc(s||'');}
+function hasGlyphs(){return (S.script?.charMap||[]).some(e=>e&&e.sound&&(e.svg||e.char));}
+function toggleGlyphView(){
+  _glyphView=!_glyphView;
+  try{localStorage.setItem('lingua_glyphview',_glyphView?'1':'0');}catch(e){}
+  if(typeof renderVocab==='function')renderVocab();
+  const vl=document.getElementById('vc-list');if(vl&&typeof wCardHtml==='function')vl.innerHTML=S.dictionary.slice().reverse().slice(0,8).map((w,i)=>wCardHtml(w,S.dictionary.length-1-i)).join('');
+  const cl=document.getElementById('ctab-list');if(cl&&typeof ccHtml==='function')cl.innerHTML=S.corpus.map((c,i)=>ccHtml(c,i)).join('');
+  if(typeof updateDailySent==='function')updateDailySent();
+  document.querySelectorAll('.glyph-toggle').forEach(b=>{b.classList.toggle('act',_glyphView);b.setAttribute('aria-pressed',_glyphView?'true':'false');});
+}
+window.toggleGlyphView=toggleGlyphView;
 
 // ---- SVG / Glyph Editor Modal (draw + code) ----
 let _svgEdIdx=-1;
@@ -84,11 +98,13 @@ let _svgEdIdx=-1;
 let _gStrokes=[];   // [{type:'line'|'free', pts:[{x,y}], _closed?}]
 let _gMode='line';  // 'line' (grid-snap dot-to-dot) | 'free' (smoothed)
 let _gGrid=6;       // segments per side; points = grid+1
-let _gWidth=1.5;    // fixed thin stroke
+let _gWidth=1;      // fixed thin stroke
 let _gDrawing=false;
 let _gPane='draw';
 let _gHover=null;   // {x,y} snapped cursor position for live preview
 let _gEllipseC1=null; // first corner for click-to-place circle/ellipse
+let _gHist=[];      // undo/redo history (JSON snapshots of _gStrokes)
+let _gHistI=-1;
 const _gR=n=>Math.round(n*100)/100;
 function glyphSnap(x,y){const s=24/_gGrid;return {x:Math.round(x/s)*s,y:Math.round(y/s)*s};}
 function glyphEvToVB(ev){const svg=document.getElementById('glyph-canvas');if(!svg)return{x:0,y:0};const r=svg.getBoundingClientRect();let x=(ev.clientX-r.left)/r.width*24,y=(ev.clientY-r.top)/r.height*24;return {x:Math.max(0,Math.min(24,x)),y:Math.max(0,Math.min(24,y))};}
@@ -156,6 +172,10 @@ function glyphRenderCanvas(){
   svg.innerHTML=dots+`<g fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</g>`+preview+verts;
   glyphSync();
 }
+// ---- undo/redo history (JSON snapshots) ----
+function glyphCommit(){_gHist=_gHist.slice(0,_gHistI+1);_gHist.push(JSON.stringify(_gStrokes));_gHistI=_gHist.length-1;}
+function glyphRestore(){_gStrokes=JSON.parse(_gHist[_gHistI]||'[]');}
+function glyphResetHist(){_gHist=['[]'];_gHistI=0;}
 function glyphDown(ev){
   ev.preventDefault();
   const vb=glyphEvToVB(ev);
@@ -163,7 +183,7 @@ function glyphDown(ev){
     let cur=_gStrokes[_gStrokes.length-1];
     if(!cur||cur.type!==_gMode||cur._closed){cur={type:_gMode,pts:[]};_gStrokes.push(cur);}
     const p=glyphSnap(vb.x,vb.y),last=cur.pts[cur.pts.length-1];
-    if(!last||last.x!==p.x||last.y!==p.y)cur.pts.push(p);
+    if(!last||last.x!==p.x||last.y!==p.y){cur.pts.push(p);glyphCommit();}
     glyphRenderCanvas();
   }else if(_gMode==='ellipse'){
     const p=glyphSnap(vb.x,vb.y);
@@ -171,7 +191,7 @@ function glyphDown(ev){
     else{
       const c1=_gEllipseC1;
       const st={type:'ellipse',cx:(c1.x+p.x)/2,cy:(c1.y+p.y)/2,rx:Math.abs(p.x-c1.x)/2,ry:Math.abs(p.y-c1.y)/2};
-      if(st.rx>0.05||st.ry>0.05)_gStrokes.push(st);
+      if(st.rx>0.05||st.ry>0.05){_gStrokes.push(st);glyphCommit();}
       _gEllipseC1=null;
     }
     glyphRenderCanvas();
@@ -202,18 +222,18 @@ function glyphUp(){
   if(!_gDrawing)return;_gDrawing=false;
   const st=_gStrokes[_gStrokes.length-1];
   if(st&&st.type==='ellipse'&&st.rx<0.1&&st.ry<0.1)_gStrokes.pop();
+  else if(st&&st.type==='free')glyphCommit();
   glyphRenderCanvas();
 }
 function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur&&(cur.type==='line'||cur.type==='curve'))cur._closed=true;_gHover=null;glyphRenderCanvas();}
 function glyphUndo(){
   if(_gMode==='ellipse'&&_gEllipseC1){_gEllipseC1=null;glyphRenderCanvas();return;}
-  if(!_gStrokes.length)return;
-  const st=_gStrokes[_gStrokes.length-1];
-  if(st.type==='ellipse'||st.type==='free'){_gStrokes.pop();}
-  else{if(st.pts.length)st.pts.pop();if(!st.pts.length)_gStrokes.pop();}
-  glyphRenderCanvas();
+  if(_gHistI>0){_gHistI--;glyphRestore();_gEllipseC1=null;glyphRenderCanvas();}
 }
-function glyphClear(){_gStrokes=[];_gEllipseC1=null;glyphRenderCanvas();}
+function glyphRedo(){
+  if(_gHistI<_gHist.length-1){_gHistI++;glyphRestore();_gEllipseC1=null;glyphRenderCanvas();}
+}
+function glyphClear(){if(!_gStrokes.length&&!_gEllipseC1)return;_gStrokes=[];_gEllipseC1=null;glyphCommit();glyphRenderCanvas();}
 function glyphSetMode(mode){
   _gMode=mode;_gEllipseC1=null;_gHover=null;
   ['line','curve','ellipse','free'].forEach(m=>document.getElementById('gm-'+m)?.classList.toggle('active',m===mode));
@@ -236,7 +256,7 @@ function openSvgEditor(i){
   const modal=document.getElementById('svg-ed-modal')||createSvgEdModal();
   document.getElementById('svg-ed-sound').textContent=e.sound||'?';
   document.getElementById('svg-ed-ta').value=e.svg||'';
-  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=1.5;_gHover=null;_gEllipseC1=null;
+  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=1;_gHover=null;_gEllipseC1=null;glyphResetHist();
   glyphSetMode('line');
   svgEdSetPane(e.svg?'code':'draw');
   modal.classList.add('open');
@@ -297,10 +317,10 @@ function createSvgEdModal(){
       <div class="glyph-canvas-wrap">
         <svg id="glyph-canvas" viewBox="0 0 24 24" onpointerdown="glyphDown(event)" onpointermove="glyphMove(event)" onpointerup="glyphUp(event)" onpointerleave="glyphLeave(event)" ondblclick="glyphNewStroke()"></svg>
       </div>
-      <div style="display:flex;gap:8px;margin:12px 0 8px">
-        <button class="btn btn-sm" onclick="glyphNewStroke()">${icon('plus')} ${t('glyphNewStroke')}</button>
-        <button class="btn btn-sm btn-gh" onclick="glyphUndo()">${icon('arrL')} ${t('glyphUndo')}</button>
-        <button class="btn btn-sm btn-r" onclick="glyphClear()">${icon('x')} ${t('glyphClearAll')}</button>
+      <div style="display:flex;gap:8px;margin:12px 0 8px;align-items:center">
+        <button class="btn btn-sm btn-gh" onclick="glyphUndo()" title="${t('glyphUndo')}" aria-label="${t('glyphUndo')}">${icon('arrL')}</button>
+        <button class="btn btn-sm btn-gh" onclick="glyphRedo()" title="${t('glyphRedo')}" aria-label="${t('glyphRedo')}">${icon('arrR')}</button>
+        <button class="btn btn-sm btn-gh" onclick="glyphClear()" title="${t('glyphClearAll')}" aria-label="${t('glyphClearAll')}" style="margin-left:auto;color:var(--rs)">${icon('x')}</button>
       </div>
       <div id="glyph-hint" style="font-size:.7rem;color:var(--txm)">${t('glyphHintLine')}</div>
     </div>
@@ -322,6 +342,14 @@ function createSvgEdModal(){
     </div>
   </div>`;
   document.body.appendChild(m);
+  // Keyboard: Enter = new stroke, Backspace = undo (only while drawing, not in text fields)
+  document.addEventListener('keydown',e=>{
+    if(!m.classList.contains('open')||_gPane!=='draw')return;
+    const tag=(e.target&&e.target.tagName||'').toLowerCase();
+    if(tag==='textarea'||tag==='input')return;
+    if(e.key==='Enter'){e.preventDefault();glyphNewStroke();}
+    else if(e.key==='Backspace'){e.preventDefault();glyphUndo();}
+  });
   return m;
 }
 function selectWorldScript(id){S.script.worldScript=id;schSave();var p=document.getElementById('ws-chars-panel');if(p)p.innerHTML=renderCharPanel(id);document.querySelectorAll('.ws-card').forEach(function(c){c.classList.toggle('sel',c.getAttribute('onclick').includes(id));});}
