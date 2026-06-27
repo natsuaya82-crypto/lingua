@@ -78,18 +78,113 @@ function renderGlyphs(text){
 }
 function previewConvert(){const inp=document.getElementById('sc-conv-in'),out=document.getElementById('sc-conv-out');if(!inp||!out)return;out.innerHTML=renderGlyphs(inp.value)||'—';}
 
-// ---- SVG Editor Modal ----
+// ---- SVG / Glyph Editor Modal (draw + code) ----
 let _svgEdIdx=-1;
+// Drawing state
+let _gStrokes=[];   // [{type:'line'|'free', pts:[{x,y}], _closed?}]
+let _gMode='line';  // 'line' (grid-snap dot-to-dot) | 'free' (smoothed)
+let _gGrid=6;       // segments per side; points = grid+1
+let _gWidth=2;
+let _gDrawing=false;
+let _gPane='draw';
+const _gR=n=>Math.round(n*100)/100;
+function glyphSnap(x,y){const s=24/_gGrid;return {x:Math.round(x/s)*s,y:Math.round(y/s)*s};}
+function glyphEvToVB(ev){const svg=document.getElementById('glyph-canvas');if(!svg)return{x:0,y:0};const r=svg.getBoundingClientRect();let x=(ev.clientX-r.left)/r.width*24,y=(ev.clientY-r.top)/r.height*24;return {x:Math.max(0,Math.min(24,x)),y:Math.max(0,Math.min(24,y))};}
+function glyphLineD(pts){if(!pts.length)return'';if(pts.length===1)return `M ${_gR(pts[0].x)} ${_gR(pts[0].y)} l 0 0`;return 'M '+pts.map(p=>`${_gR(p.x)} ${_gR(p.y)}`).join(' L ');}
+function glyphFreeD(pts){
+  if(!pts.length)return'';
+  if(pts.length<3)return glyphLineD(pts);
+  let d=`M ${_gR(pts[0].x)} ${_gR(pts[0].y)}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6;
+    const c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;
+    d+=` C ${_gR(c1x)} ${_gR(c1y)} ${_gR(c2x)} ${_gR(c2y)} ${_gR(p2.x)} ${_gR(p2.y)}`;
+  }
+  return d;
+}
+function glyphPathD(st){return st.type==='free'?glyphFreeD(st.pts):glyphLineD(st.pts);}
+function glyphToSVG(){
+  const paths=_gStrokes.filter(s=>s.pts&&s.pts.length).map(s=>`<path d="${glyphPathD(s)}"/>`).join('');
+  if(!paths)return'';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+function glyphSync(){
+  if(_gPane!=='draw')return;
+  const out=glyphToSVG();
+  const ta=document.getElementById('svg-ed-ta');if(ta)ta.value=out;
+  const pv=document.getElementById('svg-ed-pv');if(pv)pv.innerHTML=out||`<span style="color:var(--txm);font-size:.8rem">${t('glyphEmpty')}</span>`;
+}
+function glyphRenderCanvas(){
+  const svg=document.getElementById('glyph-canvas');if(!svg)return;
+  const s=24/_gGrid;let dots='';
+  for(let r=0;r<=_gGrid;r++)for(let c=0;c<=_gGrid;c++)dots+=`<circle cx="${_gR(c*s)}" cy="${_gR(r*s)}" r="0.3" fill="rgba(255,255,255,.18)"/>`;
+  let strokes='',verts='';
+  _gStrokes.forEach(st=>{if(st.pts&&st.pts.length)strokes+=`<path d="${glyphPathD(st)}" fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;});
+  if(_gMode==='line')_gStrokes.forEach(st=>{if(st.type!=='free')st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.55" fill="var(--ac)"/>`);});
+  svg.innerHTML=dots+strokes+verts;
+  glyphSync();
+}
+function glyphDown(ev){
+  ev.preventDefault();
+  const vb=glyphEvToVB(ev);
+  if(_gMode==='line'){
+    let cur=_gStrokes[_gStrokes.length-1];
+    if(!cur||cur.type!=='line'||cur._closed){cur={type:'line',pts:[]};_gStrokes.push(cur);}
+    const p=glyphSnap(vb.x,vb.y);const last=cur.pts[cur.pts.length-1];
+    if(!last||last.x!==p.x||last.y!==p.y)cur.pts.push(p);
+    glyphRenderCanvas();
+  }else{
+    _gDrawing=true;_gStrokes.push({type:'free',pts:[vb]});
+    try{ev.target.setPointerCapture&&ev.target.setPointerCapture(ev.pointerId);}catch(e){}
+    glyphRenderCanvas();
+  }
+}
+function glyphMove(ev){
+  if(_gMode!=='free'||!_gDrawing)return;
+  const vb=glyphEvToVB(ev),st=_gStrokes[_gStrokes.length-1];if(!st)return;
+  const last=st.pts[st.pts.length-1],dx=vb.x-last.x,dy=vb.y-last.y;
+  if(dx*dx+dy*dy>=0.36){st.pts.push(vb);glyphRenderCanvas();}
+}
+function glyphUp(){if(_gMode==='free'&&_gDrawing){_gDrawing=false;glyphRenderCanvas();}}
+function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur)cur._closed=true;}
+function glyphUndo(){
+  if(!_gStrokes.length)return;
+  const st=_gStrokes[_gStrokes.length-1];
+  if(st.type==='free'){_gStrokes.pop();}
+  else{if(st.pts.length)st.pts.pop();if(!st.pts.length)_gStrokes.pop();}
+  glyphRenderCanvas();
+}
+function glyphClear(){_gStrokes=[];glyphRenderCanvas();}
+function glyphSetMode(mode){
+  _gMode=mode;
+  document.getElementById('gm-line')?.classList.toggle('active',mode==='line');
+  document.getElementById('gm-free')?.classList.toggle('active',mode==='free');
+  const h=document.getElementById('glyph-hint');if(h)h.textContent=mode==='free'?t('glyphHintFree'):t('glyphHintLine');
+  glyphRenderCanvas();
+}
+function glyphSetGrid(v){_gGrid=parseInt(v)||6;glyphRenderCanvas();}
+function glyphSetWidth(v){_gWidth=parseFloat(v)||2;glyphRenderCanvas();}
+function svgEdSetPane(p){
+  _gPane=p;
+  const dp=document.getElementById('svg-draw-pane'),cp=document.getElementById('svg-code-pane');
+  if(dp)dp.style.display=p==='draw'?'block':'none';
+  if(cp)cp.style.display=p==='code'?'block':'none';
+  document.querySelectorAll('#svg-ed-modal .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.pane===p));
+  if(p==='draw')glyphRenderCanvas();else renderSvgPreview();
+}
 function openSvgEditor(i){
   _svgEdIdx=i;
   const e=S.script.charMap[i]||{};
   const modal=document.getElementById('svg-ed-modal')||createSvgEdModal();
   document.getElementById('svg-ed-sound').textContent=e.sound||'?';
   document.getElementById('svg-ed-ta').value=e.svg||'';
-  renderSvgPreview();
+  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=2;
+  glyphSetMode('line');
+  svgEdSetPane(e.svg?'code':'draw');
   modal.classList.add('open');
 }
-function closeSvgEditor(){const m=document.getElementById('svg-ed-modal');if(m)m.classList.remove('open');_svgEdIdx=-1;}
+function closeSvgEditor(){const m=document.getElementById('svg-ed-modal');if(m)m.classList.remove('open');_svgEdIdx=-1;_gDrawing=false;}
 function renderSvgPreview(){
   const ta=document.getElementById('svg-ed-ta'),pv=document.getElementById('svg-ed-pv');
   if(!ta||!pv)return;
@@ -105,12 +200,13 @@ function saveSvgEditor(){
   closeSvgEditor();
   showToast(clean?t('svgSaved'):t('svgCleared'),'success');
 }
-function clearSvgEditor(){const ta=document.getElementById('svg-ed-ta');if(ta)ta.value='';renderSvgPreview();}
+function clearSvgEditor(){const ta=document.getElementById('svg-ed-ta');if(ta)ta.value='';_gStrokes=[];if(_gPane==='draw')glyphRenderCanvas();else renderSvgPreview();}
 async function uploadSvgFile(inp){
   const f=inp.files?.[0];if(!f)return;
   if(!/\.svg$/i.test(f.name)&&!/svg/i.test(f.type)){showToast(t('svgInvalidFile'),'error');return;}
   if(f.size>200*1024){showToast(t('svgTooLarge'),'error');return;}
   const text=await f.text();
+  svgEdSetPane('code');
   const ta=document.getElementById('svg-ed-ta');if(ta){ta.value=text;renderSvgPreview();}
   inp.value='';
 }
@@ -118,17 +214,48 @@ function createSvgEdModal(){
   const m=document.createElement('div');
   m.id='svg-ed-modal';m.className='modal-bg';
   m.onclick=e=>{if(e.target===m)closeSvgEditor();};
-  m.innerHTML=`<div class="msheet" style="max-width:560px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700">${icon('pen')} <span data-i18n="svgRegister">${t('svgRegister')}</span> — <span id="svg-ed-sound" style="color:var(--pur);font-family:monospace"></span></div>
+  m.innerHTML=`<div class="msheet" style="max-width:600px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700">${icon('pen')} <span data-i18n="svgRegister">${t('svgRegister')}</span> — <span id="svg-ed-sound" style="color:var(--ac);font-family:monospace"></span></div>
       <button class="btn btn-gh btn-xs" onclick="closeSvgEditor()" aria-label="${t('closeAria')}">${icon('x')}</button>
     </div>
-    <div style="font-size:.72rem;color:var(--txs);margin-bottom:10px">${t('svgEditorDesc')}</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <label class="btn btn-sm" style="margin:0">${icon('upload')} <span data-i18n="svgUpload">${t('svgUpload')}</span><input type="file" accept=".svg,image/svg+xml" style="display:none" onchange="uploadSvgFile(this)"></label>
-      <button class="btn btn-sm btn-gh" onclick="clearSvgEditor()">${icon('x')} ${t('clear')}</button>
+    <div class="seg" style="margin-bottom:14px">
+      <button class="seg-btn active" data-pane="draw" onclick="svgEdSetPane('draw')">${icon('pen')} ${t('glyphDraw')}</button>
+      <button class="seg-btn" data-pane="code" onclick="svgEdSetPane('code')">${icon('clipboard')} ${t('glyphCode')}</button>
     </div>
-    <textarea id="svg-ed-ta" class="inp inp-ta" style="font-family:monospace;font-size:.74rem;min-height:140px;line-height:1.5" placeholder="&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'&gt;...&lt;/svg&gt;" oninput="renderSvgPreview()"></textarea>
+    <div id="svg-draw-pane">
+      <div class="glyph-tools">
+        <div class="glyph-tool-group">
+          <button class="gt-btn active" id="gm-line" onclick="glyphSetMode('line')">${t('glyphLine')}</button>
+          <button class="gt-btn" id="gm-free" onclick="glyphSetMode('free')">${t('glyphFree')}</button>
+        </div>
+        <label class="glyph-tool-lbl">${t('glyphGrid')}
+          <select class="inp" style="width:auto;padding:5px 8px" onchange="glyphSetGrid(this.value)">
+            <option value="4">5×5</option><option value="6" selected>7×7</option><option value="8">9×9</option>
+          </select>
+        </label>
+        <label class="glyph-tool-lbl">${t('glyphThick')}
+          <input type="range" min="1" max="4" step="0.5" value="2" oninput="glyphSetWidth(this.value)" style="width:84px">
+        </label>
+      </div>
+      <div class="glyph-canvas-wrap">
+        <svg id="glyph-canvas" viewBox="0 0 24 24" onpointerdown="glyphDown(event)" onpointermove="glyphMove(event)" onpointerup="glyphUp(event)" onpointerleave="glyphUp(event)"></svg>
+      </div>
+      <div style="display:flex;gap:8px;margin:12px 0 8px">
+        <button class="btn btn-sm" onclick="glyphNewStroke()">${icon('plus')} ${t('glyphNewStroke')}</button>
+        <button class="btn btn-sm btn-gh" onclick="glyphUndo()">${icon('arrL')} ${t('glyphUndo')}</button>
+        <button class="btn btn-sm btn-r" onclick="glyphClear()">${icon('x')} ${t('glyphClearAll')}</button>
+      </div>
+      <div id="glyph-hint" style="font-size:.7rem;color:var(--txm)">${t('glyphHintLine')}</div>
+    </div>
+    <div id="svg-code-pane" style="display:none">
+      <div style="font-size:.72rem;color:var(--txs);margin-bottom:10px">${t('svgEditorDesc')}</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <label class="btn btn-sm" style="margin:0">${icon('upload')} <span data-i18n="svgUpload">${t('svgUpload')}</span><input type="file" accept=".svg,image/svg+xml" style="display:none" onchange="uploadSvgFile(this)"></label>
+        <button class="btn btn-sm btn-gh" onclick="clearSvgEditor()">${icon('x')} ${t('clear')}</button>
+      </div>
+      <textarea id="svg-ed-ta" class="inp inp-ta" style="font-family:monospace;font-size:.74rem;min-height:120px;line-height:1.5" placeholder="&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'&gt;...&lt;/svg&gt;" oninput="renderSvgPreview()"></textarea>
+    </div>
     <div style="margin-top:14px">
       <div class="fl" style="margin-bottom:6px">${t('preview')}</div>
       <div id="svg-ed-pv" class="glyph-preview">—</div>
