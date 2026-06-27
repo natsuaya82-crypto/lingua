@@ -103,11 +103,21 @@ function glyphFreeD(pts){
   }
   return d;
 }
-function glyphPathD(st){return st.type==='free'?glyphFreeD(st.pts):glyphLineD(st.pts);}
+function glyphPathD(st){return (st.type==='free'||st.type==='curve')?glyphFreeD(st.pts):glyphLineD(st.pts);}
+// Bare element (inherits fill/stroke from wrapping <svg>)
+function glyphElt(st){
+  if(st.type==='ellipse'){
+    if(!(st.rx>0.05||st.ry>0.05))return'';
+    if(Math.abs(st.rx-st.ry)<0.01)return `<circle cx="${_gR(st.cx)}" cy="${_gR(st.cy)}" r="${_gR(st.rx)}"/>`;
+    return `<ellipse cx="${_gR(st.cx)}" cy="${_gR(st.cy)}" rx="${_gR(st.rx)}" ry="${_gR(st.ry)}"/>`;
+  }
+  if(!st.pts||!st.pts.length)return'';
+  return `<path d="${glyphPathD(st)}"/>`;
+}
 function glyphToSVG(){
-  const paths=_gStrokes.filter(s=>s.pts&&s.pts.length).map(s=>`<path d="${glyphPathD(s)}"/>`).join('');
-  if(!paths)return'';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  const els=_gStrokes.map(glyphElt).filter(Boolean).join('');
+  if(!els)return'';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</svg>`;
 }
 function glyphSync(){
   if(_gPane!=='draw')return;
@@ -119,20 +129,25 @@ function glyphRenderCanvas(){
   const svg=document.getElementById('glyph-canvas');if(!svg)return;
   const s=24/_gGrid;let dots='';
   for(let r=0;r<=_gGrid;r++)for(let c=0;c<=_gGrid;c++)dots+=`<circle cx="${_gR(c*s)}" cy="${_gR(r*s)}" r="0.3" fill="rgba(255,255,255,.18)"/>`;
-  let strokes='',verts='';
-  _gStrokes.forEach(st=>{if(st.pts&&st.pts.length)strokes+=`<path d="${glyphPathD(st)}" fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;});
-  if(_gMode==='line')_gStrokes.forEach(st=>{if(st.type!=='free')st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.55" fill="var(--ac)"/>`);});
-  svg.innerHTML=dots+strokes+verts;
+  const els=_gStrokes.map(glyphElt).filter(Boolean).join('');
+  let verts='';
+  if(_gMode==='line'||_gMode==='curve')_gStrokes.forEach(st=>{if(st.pts)st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.55" fill="var(--ac)"/>`);});
+  svg.innerHTML=dots+`<g fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</g>`+verts;
   glyphSync();
 }
 function glyphDown(ev){
   ev.preventDefault();
   const vb=glyphEvToVB(ev);
-  if(_gMode==='line'){
+  if(_gMode==='line'||_gMode==='curve'){
     let cur=_gStrokes[_gStrokes.length-1];
-    if(!cur||cur.type!=='line'||cur._closed){cur={type:'line',pts:[]};_gStrokes.push(cur);}
-    const p=glyphSnap(vb.x,vb.y);const last=cur.pts[cur.pts.length-1];
+    if(!cur||cur.type!==_gMode||cur._closed){cur={type:_gMode,pts:[]};_gStrokes.push(cur);}
+    const p=glyphSnap(vb.x,vb.y),last=cur.pts[cur.pts.length-1];
     if(!last||last.x!==p.x||last.y!==p.y)cur.pts.push(p);
+    glyphRenderCanvas();
+  }else if(_gMode==='ellipse'){
+    _gDrawing=true;const p=glyphSnap(vb.x,vb.y);
+    _gStrokes.push({type:'ellipse',cx:p.x,cy:p.y,rx:0,ry:0,_x0:p.x,_y0:p.y});
+    try{ev.target.setPointerCapture&&ev.target.setPointerCapture(ev.pointerId);}catch(e){}
     glyphRenderCanvas();
   }else{
     _gDrawing=true;_gStrokes.push({type:'free',pts:[vb]});
@@ -141,26 +156,37 @@ function glyphDown(ev){
   }
 }
 function glyphMove(ev){
-  if(_gMode!=='free'||!_gDrawing)return;
+  if(!_gDrawing)return;
   const vb=glyphEvToVB(ev),st=_gStrokes[_gStrokes.length-1];if(!st)return;
-  const last=st.pts[st.pts.length-1],dx=vb.x-last.x,dy=vb.y-last.y;
-  if(dx*dx+dy*dy>=0.36){st.pts.push(vb);glyphRenderCanvas();}
+  if(_gMode==='ellipse'){
+    const p=glyphSnap(vb.x,vb.y);
+    st.cx=(st._x0+p.x)/2;st.cy=(st._y0+p.y)/2;st.rx=Math.abs(p.x-st._x0)/2;st.ry=Math.abs(p.y-st._y0)/2;
+    glyphRenderCanvas();
+  }else if(_gMode==='free'){
+    const last=st.pts[st.pts.length-1],dx=vb.x-last.x,dy=vb.y-last.y;
+    if(dx*dx+dy*dy>=0.36){st.pts.push(vb);glyphRenderCanvas();}
+  }
 }
-function glyphUp(){if(_gMode==='free'&&_gDrawing){_gDrawing=false;glyphRenderCanvas();}}
-function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur)cur._closed=true;}
+function glyphUp(){
+  if(!_gDrawing)return;_gDrawing=false;
+  const st=_gStrokes[_gStrokes.length-1];
+  if(st&&st.type==='ellipse'&&st.rx<0.1&&st.ry<0.1)_gStrokes.pop();
+  glyphRenderCanvas();
+}
+function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur&&(cur.type==='line'||cur.type==='curve'))cur._closed=true;}
 function glyphUndo(){
   if(!_gStrokes.length)return;
   const st=_gStrokes[_gStrokes.length-1];
-  if(st.type==='free'){_gStrokes.pop();}
+  if(st.type==='ellipse'||st.type==='free'){_gStrokes.pop();}
   else{if(st.pts.length)st.pts.pop();if(!st.pts.length)_gStrokes.pop();}
   glyphRenderCanvas();
 }
 function glyphClear(){_gStrokes=[];glyphRenderCanvas();}
 function glyphSetMode(mode){
   _gMode=mode;
-  document.getElementById('gm-line')?.classList.toggle('active',mode==='line');
-  document.getElementById('gm-free')?.classList.toggle('active',mode==='free');
-  const h=document.getElementById('glyph-hint');if(h)h.textContent=mode==='free'?t('glyphHintFree'):t('glyphHintLine');
+  ['line','curve','ellipse','free'].forEach(m=>document.getElementById('gm-'+m)?.classList.toggle('active',m===mode));
+  const h=document.getElementById('glyph-hint');
+  if(h)h.textContent=mode==='free'?t('glyphHintFree'):mode==='ellipse'?t('glyphHintEllipse'):mode==='curve'?t('glyphHintCurve'):t('glyphHintLine');
   glyphRenderCanvas();
 }
 function glyphSetGrid(v){_gGrid=parseInt(v)||6;glyphRenderCanvas();}
@@ -227,6 +253,8 @@ function createSvgEdModal(){
       <div class="glyph-tools">
         <div class="glyph-tool-group">
           <button class="gt-btn active" id="gm-line" onclick="glyphSetMode('line')">${t('glyphLine')}</button>
+          <button class="gt-btn" id="gm-curve" onclick="glyphSetMode('curve')">${t('glyphCurve')}</button>
+          <button class="gt-btn" id="gm-ellipse" onclick="glyphSetMode('ellipse')">${t('glyphEllipse')}</button>
           <button class="gt-btn" id="gm-free" onclick="glyphSetMode('free')">${t('glyphFree')}</button>
         </div>
         <label class="glyph-tool-lbl">${t('glyphGrid')}
