@@ -129,7 +129,7 @@ function goBack(){
 function setBN(id){document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));const e=document.getElementById(id);if(e)e.classList.add('active');}
 
 // ---- Update UI ----
-function _updateUI(){updateDash();updateAuthUI();updateVisUI();}
+function _updateUI(){updateDash();updateAuthUI();updateVisUI();if(typeof updateGlyphToggle==='function')updateGlyphToggle();}
 function updateDash(){
   const words=S.dictionary?.length||0,phos=(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0),corp=S.corpus?.length||0;
   const lname=document.getElementById('d-lname');if(lname)lname.textContent=S.langName||t('newLang');
