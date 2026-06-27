@@ -20,7 +20,6 @@ function renderRoadmap(){
   // リストはホームには表示しない（すべて見るモーダルに集約）
   const e=document.getElementById('roadmap-list');if(e)e.innerHTML='';
 }
-function showAchDetail(id){const r=ROADMAP.find(x=>x.id===id);if(!r)return;const done=r.check();document.getElementById('ach-icon').innerHTML=r.icon;document.getElementById('ach-title').textContent=r.title[_lang]||r.title.jp;document.getElementById('ach-desc').textContent=r.desc[_lang]||r.desc.jp;document.getElementById('ach-pts').innerHTML=(done?icon('check')+' ':'')+(r.pts)+' pts';document.getElementById('ach-modal').classList.add('open');}
 function renderRoadmapFull(){
   const box=document.getElementById('roadmap-full');
   if(!box)return;
@@ -95,7 +94,6 @@ function renderRoadmapFull(){
   `;
 }
 function openAchModal(){goTo('roadmap');}
-function closeAchModal(){document.getElementById('ach-modal').classList.remove('open');}
 
 // ---- Navigation ----
 const _navHist=['dashboard'];
@@ -470,7 +468,6 @@ document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
   // Close topmost open modal/overlay in stacking order
   const edSvg=document.getElementById('svg-ed-modal');if(edSvg&&edSvg.classList.contains('open')){closeSvgEditor();return;}
-  const ach=document.getElementById('ach-modal');if(ach&&ach.classList.contains('open')){closeAchModal();return;}
   const vp=document.getElementById('vis-pop');if(vp&&vp.classList.contains('open')){closeVisPop();return;}
   const lg=document.getElementById('login-modal');if(lg&&lg.classList.contains('open')){closeLogin();return;}
   const lp=document.getElementById('lang-picker-modal');if(lp&&lp.classList.contains('open')){closeLangPicker();return;}
