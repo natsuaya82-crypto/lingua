@@ -8,9 +8,9 @@
 <meta name="description" content="Build artificial languages with phonology, vocabulary, grammar and world scripts.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c7eff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7z'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,400&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=15">
-<script src="js/icons.js?v=15"></script>
-<script src="js/stripe.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=16">
+<script src="js/icons.js?v=16"></script>
+<script src="js/stripe.js?v=16"></script>
 </head>
 <body>
 
@@ -313,6 +313,17 @@
         <div class="page-footer"><div class="footer-copy">© 2025 Lingua. All rights reserved.</div></div>
       </div>
     </section>
+
+    <!-- ROADMAP -->
+    <section id="page-roadmap" class="page">
+      <div class="pi">
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <div class="ptitle" data-i18n="roadmap">ロードマップ</div>
+        <div class="psub" data-i18n="earnedPts">獲得ポイント</div>
+        <div id="roadmap-full"></div>
+        <div class="page-footer"></div>
+      </div>
+    </section>
   </main>
 
   <!-- BOTTOM NAV -->
@@ -409,14 +420,14 @@
 <div class="autosave" id="autosave-el"></div>
 
 <!-- Firebase -->
-<script type="module" src="js/firebase.js?v=15"></script>
+<script type="module" src="js/firebase.js?v=16"></script>
 
 <!-- App modules (load order matters: core first, ui last) -->
-<script src="js/app-core.js?v=15"></script>
-<script src="js/app-auth.js?v=15"></script>
-<script src="js/app-vocab.js?v=15"></script>
-<script src="js/app-grammar.js?v=15"></script>
-<script src="js/app-script.js?v=15"></script>
-<script src="js/app-ui.js?v=15"></script>
+<script src="js/app-core.js?v=16"></script>
+<script src="js/app-auth.js?v=16"></script>
+<script src="js/app-vocab.js?v=16"></script>
+<script src="js/app-grammar.js?v=16"></script>
+<script src="js/app-script.js?v=16"></script>
+<script src="js/app-ui.js?v=16"></script>
 </body>
 </html>

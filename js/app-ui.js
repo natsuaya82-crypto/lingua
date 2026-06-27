@@ -21,8 +21,8 @@ function renderRoadmap(){
   const e=document.getElementById('roadmap-list');if(e)e.innerHTML='';
 }
 function showAchDetail(id){const r=ROADMAP.find(x=>x.id===id);if(!r)return;const done=r.check();document.getElementById('ach-icon').innerHTML=r.icon;document.getElementById('ach-title').textContent=r.title[_lang]||r.title.jp;document.getElementById('ach-desc').textContent=r.desc[_lang]||r.desc.jp;document.getElementById('ach-pts').innerHTML=(done?icon('check')+' ':'')+(r.pts)+' pts';document.getElementById('ach-modal').classList.add('open');}
-function openAchModal(){
-  const box=document.querySelector('.ach-box');
+function renderRoadmapFull(){
+  const box=document.getElementById('roadmap-full');
   if(!box)return;
   
   // 4セクションの進捗判定（指定キーで判定）
@@ -92,17 +92,18 @@ function openAchModal(){
       <span style="flex:1;font-size:.76rem">${r.title[_lang]||r.title.jp}</span>
       <span style="font-size:.62rem;color:${done?'var(--ok)':'var(--txm)'}">${done?''+icon('check')+'':''} ${r.pts}pts</span>
     </div>`;}).join('')}
-    <button class="btn btn-gh btn-sm" style="margin-top:14px;width:100%" onclick="closeAchModal()">${t('close')}</button>
   `;
-  
-  document.getElementById('ach-modal').classList.add('open');
 }
+function openAchModal(){goTo('roadmap');}
 function closeAchModal(){document.getElementById('ach-modal').classList.remove('open');}
 
 // ---- Navigation ----
 const _navHist=['dashboard'];
 function goTo(id,fromBack){
   window.scrollTo(0,0);
+  // Close any open editor/memo overlay so it doesn't linger under the new page
+  ['ed-ov','memo-ov','svg-ed-modal'].forEach(oid=>{const o=document.getElementById(oid);if(o)o.classList.remove('open');});
+  _ced=null;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
@@ -111,6 +112,7 @@ function goTo(id,fromBack){
   if(id==='vocab'){renderVocab();const vc=document.getElementById('vtab-count');if(vc)vc.textContent=S.dictionary.length;renderVcRecent();}
   if(id==='library')renderLib();
   if(id==='memo')loadMemos();
+  if(id==='roadmap')renderRoadmapFull();
   if(id==='settings')loadSettingsPage();
   if(id==='contact')renderContactForm();
   if(id==='tokushoho'||id==='privacy'||id==='terms')renderLegalPages();
