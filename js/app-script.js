@@ -87,6 +87,7 @@ let _gGrid=6;       // segments per side; points = grid+1
 let _gWidth=2;
 let _gDrawing=false;
 let _gPane='draw';
+let _gHover=null;   // {x,y} snapped cursor position for live preview (line/curve)
 const _gR=n=>Math.round(n*100)/100;
 function glyphSnap(x,y){const s=24/_gGrid;return {x:Math.round(x/s)*s,y:Math.round(y/s)*s};}
 function glyphEvToVB(ev){const svg=document.getElementById('glyph-canvas');if(!svg)return{x:0,y:0};const r=svg.getBoundingClientRect();let x=(ev.clientX-r.left)/r.width*24,y=(ev.clientY-r.top)/r.height*24;return {x:Math.max(0,Math.min(24,x)),y:Math.max(0,Math.min(24,y))};}
@@ -125,14 +126,22 @@ function glyphSync(){
   const ta=document.getElementById('svg-ed-ta');if(ta)ta.value=out;
   const pv=document.getElementById('svg-ed-pv');if(pv)pv.innerHTML=out||`<span style="color:var(--txm);font-size:.8rem">${t('glyphEmpty')}</span>`;
 }
+function glyphCurrentOpen(){const st=_gStrokes[_gStrokes.length-1];return (st&&(st.type==='line'||st.type==='curve')&&!st._closed)?st:null;}
 function glyphRenderCanvas(){
   const svg=document.getElementById('glyph-canvas');if(!svg)return;
   const s=24/_gGrid;let dots='';
-  for(let r=0;r<=_gGrid;r++)for(let c=0;c<=_gGrid;c++)dots+=`<circle cx="${_gR(c*s)}" cy="${_gR(r*s)}" r="0.3" fill="rgba(255,255,255,.18)"/>`;
+  for(let r=0;r<=_gGrid;r++)for(let c=0;c<=_gGrid;c++)dots+=`<circle cx="${_gR(c*s)}" cy="${_gR(r*s)}" r="0.42" fill="rgba(255,255,255,.16)"/>`;
   const els=_gStrokes.map(glyphElt).filter(Boolean).join('');
-  let verts='';
-  if(_gMode==='line'||_gMode==='curve')_gStrokes.forEach(st=>{if(st.pts)st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.55" fill="var(--ac)"/>`);});
-  svg.innerHTML=dots+`<g fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</g>`+verts;
+  let verts='',preview='';
+  if(_gMode==='line'||_gMode==='curve'){
+    _gStrokes.forEach(st=>{if(st.pts)st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.5" fill="var(--ac)"/>`);});
+    if(_gHover){
+      const open=glyphCurrentOpen();const last=open&&open.pts.length?open.pts[open.pts.length-1]:null;
+      if(last)preview+=`<line x1="${_gR(last.x)}" y1="${_gR(last.y)}" x2="${_gR(_gHover.x)}" y2="${_gR(_gHover.y)}" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" opacity="0.45" stroke-dasharray="0.8 0.8"/>`;
+      preview+=`<circle cx="${_gR(_gHover.x)}" cy="${_gR(_gHover.y)}" r="0.95" fill="none" stroke="var(--ac)" stroke-width="0.3"/><circle cx="${_gR(_gHover.x)}" cy="${_gR(_gHover.y)}" r="0.4" fill="var(--ac)"/>`;
+    }
+  }
+  svg.innerHTML=dots+`<g fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</g>`+preview+verts;
   glyphSync();
 }
 function glyphDown(ev){
@@ -156,8 +165,15 @@ function glyphDown(ev){
   }
 }
 function glyphMove(ev){
-  if(!_gDrawing)return;
-  const vb=glyphEvToVB(ev),st=_gStrokes[_gStrokes.length-1];if(!st)return;
+  const vb=glyphEvToVB(ev);
+  if(!_gDrawing){
+    if(_gMode==='line'||_gMode==='curve'){
+      const p=glyphSnap(vb.x,vb.y);
+      if(!_gHover||_gHover.x!==p.x||_gHover.y!==p.y){_gHover=p;glyphRenderCanvas();}
+    }
+    return;
+  }
+  const st=_gStrokes[_gStrokes.length-1];if(!st)return;
   if(_gMode==='ellipse'){
     const p=glyphSnap(vb.x,vb.y);
     st.cx=(st._x0+p.x)/2;st.cy=(st._y0+p.y)/2;st.rx=Math.abs(p.x-st._x0)/2;st.ry=Math.abs(p.y-st._y0)/2;
@@ -167,13 +183,14 @@ function glyphMove(ev){
     if(dx*dx+dy*dy>=0.36){st.pts.push(vb);glyphRenderCanvas();}
   }
 }
+function glyphLeave(){_gHover=null;if(_gDrawing)glyphUp();else glyphRenderCanvas();}
 function glyphUp(){
   if(!_gDrawing)return;_gDrawing=false;
   const st=_gStrokes[_gStrokes.length-1];
   if(st&&st.type==='ellipse'&&st.rx<0.1&&st.ry<0.1)_gStrokes.pop();
   glyphRenderCanvas();
 }
-function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur&&(cur.type==='line'||cur.type==='curve'))cur._closed=true;}
+function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur&&(cur.type==='line'||cur.type==='curve'))cur._closed=true;_gHover=null;glyphRenderCanvas();}
 function glyphUndo(){
   if(!_gStrokes.length)return;
   const st=_gStrokes[_gStrokes.length-1];
@@ -205,7 +222,7 @@ function openSvgEditor(i){
   const modal=document.getElementById('svg-ed-modal')||createSvgEdModal();
   document.getElementById('svg-ed-sound').textContent=e.sound||'?';
   document.getElementById('svg-ed-ta').value=e.svg||'';
-  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=2;
+  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=2;_gHover=null;
   glyphSetMode('line');
   svgEdSetPane(e.svg?'code':'draw');
   modal.classList.add('open');
@@ -267,7 +284,7 @@ function createSvgEdModal(){
         </label>
       </div>
       <div class="glyph-canvas-wrap">
-        <svg id="glyph-canvas" viewBox="0 0 24 24" onpointerdown="glyphDown(event)" onpointermove="glyphMove(event)" onpointerup="glyphUp(event)" onpointerleave="glyphUp(event)"></svg>
+        <svg id="glyph-canvas" viewBox="0 0 24 24" onpointerdown="glyphDown(event)" onpointermove="glyphMove(event)" onpointerup="glyphUp(event)" onpointerleave="glyphLeave(event)" ondblclick="glyphNewStroke()"></svg>
       </div>
       <div style="display:flex;gap:8px;margin:12px 0 8px">
         <button class="btn btn-sm" onclick="glyphNewStroke()">${icon('plus')} ${t('glyphNewStroke')}</button>
