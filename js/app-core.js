@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     setTimeout(()=>{
       const ls=document.getElementById('loading-screen'),ap=document.getElementById('app');
       if(ls){ls.style.opacity='0';setTimeout(()=>ls.remove(),800);}
+      expandIcons();
       if(ap)ap.style.display='block';
       applyLang();renderLangPills();
       _updateUI();initMDB();renderFaq();renderLib();renderVocab();renderRoadmap();

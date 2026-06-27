@@ -84,10 +84,11 @@ let _svgEdIdx=-1;
 let _gStrokes=[];   // [{type:'line'|'free', pts:[{x,y}], _closed?}]
 let _gMode='line';  // 'line' (grid-snap dot-to-dot) | 'free' (smoothed)
 let _gGrid=6;       // segments per side; points = grid+1
-let _gWidth=2;
+let _gWidth=1.5;    // fixed thin stroke
 let _gDrawing=false;
 let _gPane='draw';
-let _gHover=null;   // {x,y} snapped cursor position for live preview (line/curve)
+let _gHover=null;   // {x,y} snapped cursor position for live preview
+let _gEllipseC1=null; // first corner for click-to-place circle/ellipse
 const _gR=n=>Math.round(n*100)/100;
 function glyphSnap(x,y){const s=24/_gGrid;return {x:Math.round(x/s)*s,y:Math.round(y/s)*s};}
 function glyphEvToVB(ev){const svg=document.getElementById('glyph-canvas');if(!svg)return{x:0,y:0};const r=svg.getBoundingClientRect();let x=(ev.clientX-r.left)/r.width*24,y=(ev.clientY-r.top)/r.height*24;return {x:Math.max(0,Math.min(24,x)),y:Math.max(0,Math.min(24,y))};}
@@ -133,13 +134,24 @@ function glyphRenderCanvas(){
   for(let r=0;r<=_gGrid;r++)for(let c=0;c<=_gGrid;c++)dots+=`<circle cx="${_gR(c*s)}" cy="${_gR(r*s)}" r="0.42" fill="rgba(255,255,255,.16)"/>`;
   const els=_gStrokes.map(glyphElt).filter(Boolean).join('');
   let verts='',preview='';
+  const ring=p=>`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.95" fill="none" stroke="var(--ac)" stroke-width="0.3"/><circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.4" fill="var(--ac)"/>`;
   if(_gMode==='line'||_gMode==='curve'){
     _gStrokes.forEach(st=>{if(st.pts)st.pts.forEach(p=>verts+=`<circle cx="${_gR(p.x)}" cy="${_gR(p.y)}" r="0.5" fill="var(--ac)"/>`);});
     if(_gHover){
       const open=glyphCurrentOpen();const last=open&&open.pts.length?open.pts[open.pts.length-1]:null;
       if(last)preview+=`<line x1="${_gR(last.x)}" y1="${_gR(last.y)}" x2="${_gR(_gHover.x)}" y2="${_gR(_gHover.y)}" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" opacity="0.45" stroke-dasharray="0.8 0.8"/>`;
-      preview+=`<circle cx="${_gR(_gHover.x)}" cy="${_gR(_gHover.y)}" r="0.95" fill="none" stroke="var(--ac)" stroke-width="0.3"/><circle cx="${_gR(_gHover.x)}" cy="${_gR(_gHover.y)}" r="0.4" fill="var(--ac)"/>`;
+      preview+=ring(_gHover);
     }
+  }else if(_gMode==='ellipse'){
+    if(_gEllipseC1){
+      preview+=ring(_gEllipseC1);
+      if(_gHover){
+        const c1=_gEllipseC1,p=_gHover,cx=(c1.x+p.x)/2,cy=(c1.y+p.y)/2,rx=Math.abs(p.x-c1.x)/2,ry=Math.abs(p.y-c1.y)/2;
+        if(rx>0.05||ry>0.05)preview+=`<ellipse cx="${_gR(cx)}" cy="${_gR(cy)}" rx="${_gR(rx)}" ry="${_gR(ry)}" fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" opacity="0.45" stroke-dasharray="0.8 0.8"/>`;
+        preview+=`<rect x="${_gR(Math.min(c1.x,p.x))}" y="${_gR(Math.min(c1.y,p.y))}" width="${_gR(Math.abs(p.x-c1.x))}" height="${_gR(Math.abs(p.y-c1.y))}" fill="none" stroke="var(--ac)" stroke-width="0.18" opacity="0.4" stroke-dasharray="0.5 0.5"/>`;
+      }
+    }
+    if(_gHover)preview+=ring(_gHover);
   }
   svg.innerHTML=dots+`<g fill="none" stroke="var(--ac)" stroke-width="${_gWidth}" stroke-linecap="round" stroke-linejoin="round">${els}</g>`+preview+verts;
   glyphSync();
@@ -154,9 +166,14 @@ function glyphDown(ev){
     if(!last||last.x!==p.x||last.y!==p.y)cur.pts.push(p);
     glyphRenderCanvas();
   }else if(_gMode==='ellipse'){
-    _gDrawing=true;const p=glyphSnap(vb.x,vb.y);
-    _gStrokes.push({type:'ellipse',cx:p.x,cy:p.y,rx:0,ry:0,_x0:p.x,_y0:p.y});
-    try{ev.target.setPointerCapture&&ev.target.setPointerCapture(ev.pointerId);}catch(e){}
+    const p=glyphSnap(vb.x,vb.y);
+    if(!_gEllipseC1){_gEllipseC1=p;}
+    else{
+      const c1=_gEllipseC1;
+      const st={type:'ellipse',cx:(c1.x+p.x)/2,cy:(c1.y+p.y)/2,rx:Math.abs(p.x-c1.x)/2,ry:Math.abs(p.y-c1.y)/2};
+      if(st.rx>0.05||st.ry>0.05)_gStrokes.push(st);
+      _gEllipseC1=null;
+    }
     glyphRenderCanvas();
   }else{
     _gDrawing=true;_gStrokes.push({type:'free',pts:[vb]});
@@ -167,18 +184,15 @@ function glyphDown(ev){
 function glyphMove(ev){
   const vb=glyphEvToVB(ev);
   if(!_gDrawing){
-    if(_gMode==='line'||_gMode==='curve'){
+    if(_gMode!=='free'){ // line, curve, ellipse all snap-preview on hover
       const p=glyphSnap(vb.x,vb.y);
       if(!_gHover||_gHover.x!==p.x||_gHover.y!==p.y){_gHover=p;glyphRenderCanvas();}
     }
     return;
   }
-  const st=_gStrokes[_gStrokes.length-1];if(!st)return;
-  if(_gMode==='ellipse'){
-    const p=glyphSnap(vb.x,vb.y);
-    st.cx=(st._x0+p.x)/2;st.cy=(st._y0+p.y)/2;st.rx=Math.abs(p.x-st._x0)/2;st.ry=Math.abs(p.y-st._y0)/2;
-    glyphRenderCanvas();
-  }else if(_gMode==='free'){
+  // free mode is the only drag mode
+  if(_gMode==='free'){
+    const st=_gStrokes[_gStrokes.length-1];if(!st)return;
     const last=st.pts[st.pts.length-1],dx=vb.x-last.x,dy=vb.y-last.y;
     if(dx*dx+dy*dy>=0.36){st.pts.push(vb);glyphRenderCanvas();}
   }
@@ -192,22 +206,22 @@ function glyphUp(){
 }
 function glyphNewStroke(){const cur=_gStrokes[_gStrokes.length-1];if(cur&&(cur.type==='line'||cur.type==='curve'))cur._closed=true;_gHover=null;glyphRenderCanvas();}
 function glyphUndo(){
+  if(_gMode==='ellipse'&&_gEllipseC1){_gEllipseC1=null;glyphRenderCanvas();return;}
   if(!_gStrokes.length)return;
   const st=_gStrokes[_gStrokes.length-1];
   if(st.type==='ellipse'||st.type==='free'){_gStrokes.pop();}
   else{if(st.pts.length)st.pts.pop();if(!st.pts.length)_gStrokes.pop();}
   glyphRenderCanvas();
 }
-function glyphClear(){_gStrokes=[];glyphRenderCanvas();}
+function glyphClear(){_gStrokes=[];_gEllipseC1=null;glyphRenderCanvas();}
 function glyphSetMode(mode){
-  _gMode=mode;
+  _gMode=mode;_gEllipseC1=null;_gHover=null;
   ['line','curve','ellipse','free'].forEach(m=>document.getElementById('gm-'+m)?.classList.toggle('active',m===mode));
   const h=document.getElementById('glyph-hint');
   if(h)h.textContent=mode==='free'?t('glyphHintFree'):mode==='ellipse'?t('glyphHintEllipse'):mode==='curve'?t('glyphHintCurve'):t('glyphHintLine');
   glyphRenderCanvas();
 }
 function glyphSetGrid(v){_gGrid=parseInt(v)||6;glyphRenderCanvas();}
-function glyphSetWidth(v){_gWidth=parseFloat(v)||2;glyphRenderCanvas();}
 function svgEdSetPane(p){
   _gPane=p;
   const dp=document.getElementById('svg-draw-pane'),cp=document.getElementById('svg-code-pane');
@@ -222,7 +236,7 @@ function openSvgEditor(i){
   const modal=document.getElementById('svg-ed-modal')||createSvgEdModal();
   document.getElementById('svg-ed-sound').textContent=e.sound||'?';
   document.getElementById('svg-ed-ta').value=e.svg||'';
-  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=2;_gHover=null;
+  _gStrokes=[];_gDrawing=false;_gMode='line';_gWidth=1.5;_gHover=null;_gEllipseC1=null;
   glyphSetMode('line');
   svgEdSetPane(e.svg?'code':'draw');
   modal.classList.add('open');
@@ -278,9 +292,6 @@ function createSvgEdModal(){
           <select class="inp" style="width:auto;padding:5px 8px" onchange="glyphSetGrid(this.value)">
             <option value="4">5×5</option><option value="6" selected>7×7</option><option value="8">9×9</option>
           </select>
-        </label>
-        <label class="glyph-tool-lbl">${t('glyphThick')}
-          <input type="range" min="1" max="4" step="0.5" value="2" oninput="glyphSetWidth(this.value)" style="width:84px">
         </label>
       </div>
       <div class="glyph-canvas-wrap">

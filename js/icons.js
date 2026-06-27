@@ -75,3 +75,7 @@ function icon(name,size){
   return '<svg class="ico" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-.15em;flex-shrink:0">'+body+'</svg>';
 }
 window.icon=icon;
+// Expand static <i class="ic" data-ic="name"></i> placeholders in markup into inline SVGs.
+// Output is byte-identical to the inline SVGs they replaced. Idempotent.
+function expandIcons(root){(root||document).querySelectorAll('i.ic[data-ic]').forEach(el=>{el.outerHTML=icon(el.getAttribute('data-ic'));});}
+window.expandIcons=expandIcons;

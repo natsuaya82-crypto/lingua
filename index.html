@@ -24,15 +24,15 @@
   <header class="topbar">
     <div class="brand" onclick="goTo('dashboard')">LINGUA</div>
     <nav class="pc-nav" id="pc-nav">
-      <button class="pc-nav-btn active" id="pcn-dashboard" onclick="goTo('dashboard')"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 11l8-7 8 7v9h-5v-6h-6v6H4v-9z'/></svg> <span data-i18n="home">ホーム</span></button>
-      <button class="pc-nav-btn" id="pcn-vocab" onclick="goTo('vocab')"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4V4z'/><path d='M20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8V4z'/></svg> <span data-i18n="vocab">語彙</span></button>
-      <button class="pc-nav-btn" id="pcn-memo" onclick="goTo('memo')"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h12l4 4v12H4V4z'/><path d='M8 10h8M8 14h8M8 18h5'/></svg> <span data-i18n="memo">メモ</span></button>
-      <button class="pc-nav-btn" id="pcn-settings" onclick="goTo('settings')"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M4 12H1M23 12h-3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1'/></svg> <span data-i18n="settings">設定</span></button>
+      <button class="pc-nav-btn active" id="pcn-dashboard" onclick="goTo('dashboard')"><i class="ic" data-ic="home"></i> <span data-i18n="home">ホーム</span></button>
+      <button class="pc-nav-btn" id="pcn-vocab" onclick="goTo('vocab')"><i class="ic" data-ic="book"></i> <span data-i18n="vocab">語彙</span></button>
+      <button class="pc-nav-btn" id="pcn-memo" onclick="goTo('memo')"><i class="ic" data-ic="corpus"></i> <span data-i18n="memo">メモ</span></button>
+      <button class="pc-nav-btn" id="pcn-settings" onclick="goTo('settings')"><i class="ic" data-ic="gear"></i> <span data-i18n="settings">設定</span></button>
     </nav>
     <div class="topbar-right">
-      <div class="vi" id="vis-ind" onclick="openVisPop()"><span id="vis-tx"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V7a4 4 0 018 0v4'/></svg> 非公開</span></div>
+      <div class="vi" id="vis-ind" onclick="openVisPop()"><span id="vis-tx"><i class="ic" data-ic="lock"></i> 非公開</span></div>
       <button class="lang-btn" id="lang-btn" onclick="openLangPicker()" aria-label="表示言語を選択" data-i18n-aria="selectLang">JP</button>
-      <button class="avatar" id="top-avatar" onclick="goTo('settings')" aria-label="設定" data-i18n-aria="settings"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7z'/></svg></button>
+      <button class="avatar" id="top-avatar" onclick="goTo('settings')" aria-label="設定" data-i18n-aria="settings"><i class="ic" data-ic="sparkle"></i></button>
     </div>
   </header>
 
@@ -41,7 +41,7 @@
     <section id="page-dashboard" class="page active">
       <div class="pi">
         <div id="guest-banner" class="gb" onclick="openLogin()">
-          <span style="font-size:1.4rem"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='8' r='4'/><path d='M4 21a8 8 0 0116 0'/></svg></span>
+          <span style="font-size:1.4rem"><i class="ic" data-ic="user"></i></span>
           <div><div style="font-size:.84rem;font-weight:600" data-i18n="guestMode">ゲストモードで利用中</div><div style="font-size:.72rem;color:var(--txs);margin-top:2px" data-i18n="loginPrompt">ログインでクラウド同期・全機能が使えます</div></div>
           <button class="btn btn-sm btn-p" style="margin-left:auto;flex-shrink:0" data-i18n="login">ログイン</button>
         </div>
@@ -53,14 +53,14 @@
             <div class="psub" id="d-lsub">架空言語を設計しよう</div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-sm btn-gh" onclick="openLangNameEditor()"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M11 4H4v16h16v-7M18 2l4 4-10 10h-4v-4L18 2z'/></svg> <span data-i18n="langName">言語名</span></button>
+            <button class="btn btn-sm btn-gh" onclick="openLangNameEditor()"><i class="ic" data-ic="edit"></i> <span data-i18n="langName">言語名</span></button>
           </div>
         </div>
 
         <div class="dash-stats">
-          <div class="spill"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4V4z'/><path d='M20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8V4z'/></svg> <span data-i18n="vocab">語彙</span>: <strong id="sw">0</strong></div>
-          <div class="spill"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 18L7 6h1l3 12M5 14h5M15 6v12M13 6h4M13 18h4'/></svg> <span data-i18n="phonemes">音素</span>: <strong id="sp">0</strong></div>
-          <div class="spill"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h12l4 4v12H4V4z'/><path d='M8 10h8M8 14h8M8 18h5'/></svg> <span data-i18n="corpusUnit">例文</span>: <strong id="sc">0</strong></div>
+          <div class="spill"><i class="ic" data-ic="book"></i> <span data-i18n="vocab">語彙</span>: <strong id="sw">0</strong></div>
+          <div class="spill"><i class="ic" data-ic="letters"></i> <span data-i18n="phonemes">音素</span>: <strong id="sp">0</strong></div>
+          <div class="spill"><i class="ic" data-ic="corpus"></i> <span data-i18n="corpusUnit">例文</span>: <strong id="sc">0</strong></div>
         </div>
 
         <div style="margin-bottom:16px">
@@ -73,18 +73,18 @@
 
         <div class="sh" data-i18n="modules">構築モジュール</div>
         <div class="mg">
-          <div class="mc" id="mod-phoneme" onclick="openEditor('phoneme')"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M9 18V5l12-2v13'/><circle cx='6' cy='18' r='3'/><circle cx='18' cy='16' r='3'/></svg></div><div class="mt" data-i18n="phonology">音韻システム</div><div class="ms" id="mod-phoneme-s" data-i18n="phonemeDesc">子音・母音・音節構造</div></div>
-          <div class="mc" id="mod-vocab" onclick="openVocabEditor()"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4V4z'/><path d='M20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8V4z'/></svg></div><div class="mt" data-i18n="vocabulary">語彙・辞書</div><div class="ms" id="mod-vocab-s" data-i18n="vocabDesc">単語を追加・管理</div></div>
-          <div class="mc" id="mod-grammar" onclick="openEditor('grammar')"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M3 10L10 3l11 11-7 7L3 10z'/><path d='M7 10l2 2M9 8l2 2M11 6l2 2M13 14l2 2M15 12l2 2'/></svg></div><div class="mt" data-i18n="grammar">文法システム</div><div class="ms" data-i18n="grammarDesc">語順・時制・格</div></div>
-          <div class="mc" id="mod-corpus" onclick="openEditor('corpus')"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h12l4 4v12H4V4z'/><path d='M8 10h8M8 14h8M8 18h5'/></svg></div><div class="mt" data-i18n="corpusTitle">例文集</div><div class="ms" id="mod-corpus-s" data-i18n="corpusDesc">文章を記録する</div></div>
-          <div class="mc" id="mod-script" onclick="openEditor('script')"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 19l7-7-4-4-7 7v4h4zM13 7l4 4'/></svg></div><div class="mt" data-i18n="script">文字体系</div><div class="ms" data-i18n="scriptDesc">文字を登録・変換する</div></div>
-          <div class="mc" id="mod-vibe" onclick="openEditor('vibe')"><div class="mi"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 00-7 17M12 22a10 10 0 007-17'/><circle cx='6' cy='6' r='1'/><circle cx='18' cy='18' r='1'/><circle cx='18' cy='6' r='1'/></svg></div><div class="mt" data-i18n="vibe">世界観・イメージ</div><div class="ms" data-i18n="vibeDesc">言語のムードを設定</div></div>
+          <div class="mc" id="mod-phoneme" onclick="openEditor('phoneme')"><div class="mi"><i class="ic" data-ic="music"></i></div><div class="mt" data-i18n="phonology">音韻システム</div><div class="ms" id="mod-phoneme-s" data-i18n="phonemeDesc">子音・母音・音節構造</div></div>
+          <div class="mc" id="mod-vocab" onclick="openVocabEditor()"><div class="mi"><i class="ic" data-ic="book"></i></div><div class="mt" data-i18n="vocabulary">語彙・辞書</div><div class="ms" id="mod-vocab-s" data-i18n="vocabDesc">単語を追加・管理</div></div>
+          <div class="mc" id="mod-grammar" onclick="openEditor('grammar')"><div class="mi"><i class="ic" data-ic="ruler"></i></div><div class="mt" data-i18n="grammar">文法システム</div><div class="ms" data-i18n="grammarDesc">語順・時制・格</div></div>
+          <div class="mc" id="mod-corpus" onclick="openEditor('corpus')"><div class="mi"><i class="ic" data-ic="corpus"></i></div><div class="mt" data-i18n="corpusTitle">例文集</div><div class="ms" id="mod-corpus-s" data-i18n="corpusDesc">文章を記録する</div></div>
+          <div class="mc" id="mod-script" onclick="openEditor('script')"><div class="mi"><i class="ic" data-ic="pen"></i></div><div class="mt" data-i18n="script">文字体系</div><div class="ms" data-i18n="scriptDesc">文字を登録・変換する</div></div>
+          <div class="mc" id="mod-vibe" onclick="openEditor('vibe')"><div class="mi"><i class="ic" data-ic="galaxy"></i></div><div class="mt" data-i18n="vibe">世界観・イメージ</div><div class="ms" data-i18n="vibeDesc">言語のムードを設定</div></div>
         </div>
         </div><!-- /dash-main -->
 
         <aside class="dash-side">
         <div id="daily-card" class="card" style="margin-bottom:16px">
-          <div class="sh"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M3 10h18M8 3v4M16 3v4'/></svg> <span data-i18n="todaySentence">今日の1文</span></div>
+          <div class="sh"><i class="ic" data-ic="calendar"></i> <span data-i18n="todaySentence">今日の1文</span></div>
           <div id="d-topic" style="padding:10px 14px;border:1px solid var(--acb);border-radius:10px;background:var(--acd);margin-bottom:10px">
             <div style="font-size:.65rem;color:var(--ac);font-weight:600;margin-bottom:3px" data-i18n="todayScene">今日のシーン</div>
             <div id="d-topic-scene" style="font-size:.84rem;color:var(--tx);font-weight:500;margin-bottom:3px"></div>
@@ -92,14 +92,14 @@
           </div>
           <div id="d-sent" style="font-family:'Cinzel',serif;font-size:.95rem;color:var(--tx);margin-bottom:4px;min-height:1.2em"></div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <button class="btn btn-sm btn-p" onclick="openEditor('daily')"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M11 4H4v16h16v-7M18 2l4 4-10 10h-4v-4L18 2z'/></svg> <span data-i18n="writeSentence">作文する</span></button>
-            <button class="btn btn-sm btn-pur" id="viola-share-btn" onclick="shareToViola()" style="display:none" data-i18n="violaShare"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='2.5'/><path d='M12 2a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM12 14a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM2 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4zM14 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4z'/></svg> Violaで共有</button>
+            <button class="btn btn-sm btn-p" onclick="openEditor('daily')"><i class="ic" data-ic="edit"></i> <span data-i18n="writeSentence">作文する</span></button>
+            <button class="btn btn-sm btn-pur" id="viola-share-btn" onclick="shareToViola()" style="display:none" data-i18n="violaShare"><i class="ic" data-ic="flower"></i> Violaで共有</button>
           </div>
         </div>
 
         <div class="sh" data-i18n="roadmap">ロードマップ</div>
         <div class="total-pts">
-          <div style="font-size:1.5rem"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M6 4h12v3a4 4 0 01-4 4h-4a4 4 0 01-4-4V4z'/><path d='M6 5H3v2a3 3 0 003 3M18 5h3v2a3 3 0 01-3 3'/><path d='M10 11v4h4v-4M8 20h8M12 15v5'/></svg></div>
+          <div style="font-size:1.5rem"><i class="ic" data-ic="trophy"></i></div>
           <div>
             <div class="total-pts-num" id="total-pts-num">0 pts</div>
             <div style="font-size:.68rem;color:var(--txs)" data-i18n="earnedPts">獲得ポイント</div>
@@ -127,7 +127,7 @@
       <div class="pi">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
           <div style="display:flex;align-items:center;gap:10px">
-            <button class="btn btn-gh btn-sm" onclick="goBack()" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+            <button class="btn btn-gh btn-sm" onclick="goBack()" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
             <div><div class="ptitle" id="vocab-page-title" data-i18n="vocabPageTitle">語彙・辞書</div><div class="psub" data-i18n="vocabPageDesc">あなたの言語の言葉たち</div></div>
           </div>
         </div>
@@ -135,7 +135,7 @@
         <!-- タブ：追加 / 一覧 -->
         <div class="tabbar" style="margin-bottom:0">
           <button class="tabbtn active" id="vtab-add-btn" onclick="switchVocabTab('add',this)" data-i18n="addWord">単語追加</button>
-          <button class="tabbtn" id="vtab-list-btn" onclick="switchVocabTab('list',this)"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><rect x='6' y='4' width='12' height='18' rx='1'/><rect x='9' y='2' width='6' height='4' rx='1'/></svg> <span data-i18n="listTab">一覧</span> (<span id="vtab-count">0</span>)</button>
+          <button class="tabbtn" id="vtab-list-btn" onclick="switchVocabTab('list',this)"><i class="ic" data-ic="clipboard"></i> <span data-i18n="listTab">一覧</span> (<span id="vtab-count">0</span>)</button>
         </div>
 
         <!-- 追加パネル -->
@@ -149,7 +149,7 @@
             <div class="field-block"><label class="fl" data-i18n="tagsLabel">タグ（スペース区切り）</label><input type="text" class="inp" id="vc-tags" placeholder="nature spirit"></div>
           </div>
           <div class="field-block"><label class="fl" data-i18n="memoNote">メモ（語源・用例など）</label><input type="text" class="inp" id="vc-note" placeholder=""></div>
-          <button class="btn btn-p btn-bl" onclick="addWord()" style="margin-top:4px"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 5v14M5 12h14'/></svg> <span data-i18n="addWordBtn">単語を追加</span></button>
+          <button class="btn btn-p btn-bl" onclick="addWord()" style="margin-top:4px"><i class="ic" data-ic="plus"></i> <span data-i18n="addWordBtn">単語を追加</span></button>
           <div id="vc-recent" style="margin-top:20px"></div>
         </div>
 
@@ -170,7 +170,7 @@
     <!-- LIBRARY -->
     <section id="page-library" class="page">
       <div class="pi">
-        <div class="ptitle"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M5 19c0-8 6-14 16-14 0 10-6 16-14 16l-2-2z'/><path d='M5 19L16 8'/></svg> <span data-i18n="library">言語ライブラリ</span></div>
+        <div class="ptitle"><i class="ic" data-ic="leaf"></i> <span data-i18n="library">言語ライブラリ</span></div>
         <div class="psub" data-i18n="libraryDesc">世界のコンランガーが作った言語を眺めよう</div>
         <input class="inp" id="lib-srch" data-i18n-placeholder="searchLang" placeholder="言語名・ジャンルで検索…" oninput="renderLib(this.value)" style="margin-bottom:14px">
         <div id="lib-grid" style="display:grid;gap:10px"></div>
@@ -186,10 +186,10 @@
       <div class="pi">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div style="display:flex;align-items:center;gap:10px">
-            <button class="btn btn-gh btn-sm" onclick="goBack()" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+            <button class="btn btn-gh btn-sm" onclick="goBack()" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
             <div><div class="ptitle" data-i18n="memo">メモ</div><div class="psub" data-i18n="memoDesc">アイデア・メモを記録</div></div>
           </div>
-          <button class="btn btn-p" onclick="openMemoNew()"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 5v14M5 12h14'/></svg> <span data-i18n="new">新規</span></button>
+          <button class="btn btn-p" onclick="openMemoNew()"><i class="ic" data-ic="plus"></i> <span data-i18n="new">新規</span></button>
         </div>
         <div id="memo-list"></div>
       </div>
@@ -208,7 +208,7 @@
           <div class="settings-title">Viola Profile</div>
           <div class="card" style="margin-bottom:12px">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-              <div class="p-avlg" id="p-avlg" onclick="triggerAv()"><span id="p-av-init"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7z'/></svg></span></div>
+              <div class="p-avlg" id="p-avlg" onclick="triggerAv()"><span id="p-av-init"><i class="ic" data-ic="sparkle"></i></span></div>
               <div>
                 <div style="font-size:.78rem;font-weight:600;color:var(--tx)" id="pf-name-disp">-</div>
                 <div style="font-size:.68rem;color:var(--txm)" data-i18n="tapToChange">タップして画像を変更</div>
@@ -220,7 +220,7 @@
             <div class="field-block"><label class="fl" data-i18n="bio">自己紹介</label><textarea class="inp inp-ta" id="pf-bio" placeholder="例：ファンタジー世界のエルフ言語を制作中…" maxlength="200" oninput="document.getElementById('bio-cnt').textContent=this.value.length"></textarea><div style="text-align:right;font-size:.6rem;color:var(--txm)"><span id="bio-cnt">0</span>/200</div></div>
             <div class="field-block" style="margin-bottom:0"><label class="fl" data-i18n="email">メールアドレス</label><input type="text" class="inp" id="pf-email" disabled style="opacity:.45;cursor:not-allowed"></div>
           </div>
-          <button class="btn btn-p btn-bl" onclick="saveProfile()" style="margin-bottom:8px"><span id="pf-save-lbl" data-i18n="saveProfile"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 12l5 5L20 6'/></svg> 保存する</span></button>
+          <button class="btn btn-p btn-bl" onclick="saveProfile()" style="margin-bottom:8px"><span id="pf-save-lbl" data-i18n="saveProfile"><i class="ic" data-ic="check"></i> 保存する</span></button>
         </div>
 
         <!-- Account (プラン管理・ログアウト) -->
@@ -231,11 +231,11 @@
               <label class="fl" data-i18n="violaConnect">Viola 連携</label>
               <div style="display:flex;align-items:center;justify-content:space-between">
                 <span style="font-size:.78rem;color:var(--txs)" data-i18n="violaConnectDesc">コンランガーSNSと連携してシェア</span>
-                <button class="btn btn-sm btn-pur" onclick="connectViola()" data-i18n="violaConnectBtn"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='2.5'/><path d='M12 2a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM12 14a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4 4 4 0 014-4zM2 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4zM14 12a4 4 0 014-4 4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-4-4z'/></svg> Violaと連携</button>
+                <button class="btn btn-sm btn-pur" onclick="connectViola()" data-i18n="violaConnectBtn"><i class="ic" data-ic="flower"></i> Violaと連携</button>
               </div>
             </div>
-            <button class="btn btn-r btn-bl" onclick="doLogout()" style="margin-bottom:8px"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M6 21V3h12v18M10 12v1'/><path d='M3 21h18'/></svg> <span data-i18n="logout">ログアウト</span></button>
-            <button class="btn btn-bl" style="border-color:var(--rsb);color:var(--rs);font-size:.74rem;opacity:.7" onclick="deleteAccount()" data-i18n="deleteAccount"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 3L2 20h20L12 3z'/><path d='M12 10v5M12 18v.5'/></svg> アカウントを削除する</button>
+            <button class="btn btn-r btn-bl" onclick="doLogout()" style="margin-bottom:8px"><i class="ic" data-ic="door"></i> <span data-i18n="logout">ログアウト</span></button>
+            <button class="btn btn-bl" style="border-color:var(--rsb);color:var(--rs);font-size:.74rem;opacity:.7" onclick="deleteAccount()" data-i18n="deleteAccount"><i class="ic" data-ic="warn"></i> アカウントを削除する</button>
           </div>
         </div>
 
@@ -246,7 +246,7 @@
     <!-- FAQ -->
     <section id="page-faq" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
         <div class="ptitle" data-i18n="faqTitle">よくある質問</div>
         <div class="psub">FAQ</div>
         <div id="faq-list"></div>
@@ -266,8 +266,8 @@
     <!-- CONTACT -->
     <section id="page-contact" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
-        <div class="ptitle"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 5h16v11H8l-4 4V5z'/></svg> <span data-i18n="contactTitle">お問い合わせ</span></div>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
+        <div class="ptitle"><i class="ic" data-ic="chat"></i> <span data-i18n="contactTitle">お問い合わせ</span></div>
         <div class="psub" data-i18n="contactDesc">ご質問・ご要望・バグ報告</div>
         <div class="card">
           <div class="field-block"><label class="fl" data-i18n="type">種別</label><select class="inp" id="ct-type"></select></div>
@@ -285,7 +285,7 @@
     <!-- TOKUSHOHO -->
     <section id="page-tokushoho" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
         <div class="ptitle" data-i18n="tokushohoTitle">特定商取引法に基づく表示</div>
         <div class="psub">Specified Commercial Transaction Act</div>
         <div class="card" style="overflow-x:auto" id="tokushoho-body"></div>
@@ -296,7 +296,7 @@
     <!-- PRIVACY -->
     <section id="page-privacy" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
         <div class="ptitle" data-i18n="privacyTitle">プライバシーポリシー</div>
         <div class="psub">Privacy Policy</div>
         <div class="card" id="privacy-body"></div>
@@ -307,7 +307,7 @@
     <!-- TERMS -->
     <section id="page-terms" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
         <div class="ptitle" data-i18n="terms">利用規約</div>
         <div class="psub">Terms of Service</div>
         <div class="card" id="terms-body"></div>
@@ -318,7 +318,7 @@
     <!-- ROADMAP -->
     <section id="page-roadmap" class="page">
       <div class="pi">
-        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg> ホーム</button>
+        <button class="btn btn-gh btn-sm" onclick="goTo('dashboard')" style="margin-bottom:14px" data-i18n="back"><i class="ic" data-ic="arrL"></i> ホーム</button>
         <div class="ptitle" data-i18n="roadmap">ロードマップ</div>
         <div class="psub" data-i18n="earnedPts">獲得ポイント</div>
         <div id="roadmap-full"></div>
@@ -330,10 +330,10 @@
   <!-- BOTTOM NAV -->
   <nav class="bnav">
     <div class="bnav-in">
-      <button class="bnav-btn active" id="bn-dash" onclick="goTo('dashboard');setBN('bn-dash')"><div class="bni"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 11l8-7 8 7v9h-5v-6h-6v6H4v-9z'/></svg></div><span data-i18n="home">ホーム</span></button>
-      <button class="bnav-btn" id="bn-vocab" onclick="goTo('vocab');setBN('bn-vocab')"><div class="bni"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4V4z'/><path d='M20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8V4z'/></svg></div><span data-i18n="vocab">語彙</span></button>
-      <button class="bnav-btn" id="bn-memo" onclick="goTo('memo');setBN('bn-memo')"><div class="bni"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M4 4h12l4 4v12H4V4z'/><path d='M8 10h8M8 14h8M8 18h5'/></svg></div><span data-i18n="memo">メモ</span></button>
-      <button class="bnav-btn" id="bn-settings" onclick="goTo('settings');setBN('bn-settings')"><div class="bni"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='3'/><path d='M12 2v3M12 19v3M4 12H1M23 12h-3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1'/></svg></div><span data-i18n="settings">設定</span></button>
+      <button class="bnav-btn active" id="bn-dash" onclick="goTo('dashboard');setBN('bn-dash')"><div class="bni"><i class="ic" data-ic="home"></i></div><span data-i18n="home">ホーム</span></button>
+      <button class="bnav-btn" id="bn-vocab" onclick="goTo('vocab');setBN('bn-vocab')"><div class="bni"><i class="ic" data-ic="book"></i></div><span data-i18n="vocab">語彙</span></button>
+      <button class="bnav-btn" id="bn-memo" onclick="goTo('memo');setBN('bn-memo')"><div class="bni"><i class="ic" data-ic="corpus"></i></div><span data-i18n="memo">メモ</span></button>
+      <button class="bnav-btn" id="bn-settings" onclick="goTo('settings');setBN('bn-settings')"><div class="bni"><i class="ic" data-ic="gear"></i></div><span data-i18n="settings">設定</span></button>
     </div>
   </nav>
 </div>
@@ -341,7 +341,7 @@
 <!-- Editor Overlay -->
 <div id="ed-ov" class="eo">
   <div class="et">
-    <button class="btn btn-gh btn-sm" onclick="closeEditor()" aria-label="戻る" data-i18n-aria="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg></button>
+    <button class="btn btn-gh btn-sm" onclick="closeEditor()" aria-label="戻る" data-i18n-aria="back"><i class="ic" data-ic="arrL"></i></button>
     <div style="flex:1"><div class="etr" id="ed-title">エディタ</div></div>
     <div id="ed-actions"></div>
   </div>
@@ -351,7 +351,7 @@
 <!-- Memo Overlay -->
 <div id="memo-ov" class="memo-ov">
   <div class="et">
-    <button class="btn btn-gh btn-sm" onclick="closeMemoEd()" aria-label="戻る" data-i18n-aria="back"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M19 12H5M11 6l-6 6 6 6'/></svg></button>
+    <button class="btn btn-gh btn-sm" onclick="closeMemoEd()" aria-label="戻る" data-i18n-aria="back"><i class="ic" data-ic="arrL"></i></button>
     <input class="inp" id="memo-title-inp" placeholder="タイトル" data-i18n-placeholder="memoTitle" style="flex:1;border:none;background:transparent;font-size:.95rem;font-weight:600;padding:4px 8px;color:var(--tx);outline:none">
     <button class="btn btn-r btn-xs" id="memo-del-btn" onclick="delMemo()" style="display:none" aria-label="削除" data-i18n-aria="delete" data-i18n="delete">削除</button>
     <button class="btn btn-p btn-sm" onclick="saveMemo()" data-i18n="save">保存</button>
@@ -362,7 +362,7 @@
 <!-- Login Modal -->
 <div id="login-modal" class="modal-bg" onclick="if(event.target===this)closeLogin()">
   <div class="lsheet">
-    <div class="ltit"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7z'/></svg> LINGUA</div>
+    <div class="ltit"><i class="ic" data-ic="sparkle"></i> LINGUA</div>
     <div class="lsub" data-i18n="loginSub">ログインしてクラウド同期・全機能を使おう</div>
     <button class="btn btn-bl" style="border-color:var(--brh);gap:10px;margin-bottom:8px" onclick="loginGoogle()">
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
@@ -374,17 +374,17 @@
 <!-- Vis Popup -->
 <div id="vis-pop" class="vispop" onclick="if(event.target===this)closeVisPop()">
   <div class="vbox">
-    <div style="font-size:.88rem;font-weight:700;margin-bottom:14px"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='10'/><path d='M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20'/></svg> <span data-i18n="publicSettings">公開設定</span></div>
-    <div class="vopt" id="vopt-private" onclick="setVis('private')"><div style="font-size:1.2rem"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V7a4 4 0 018 0v4'/></svg></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="private">非公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="privateDesc">自分だけが見られます</div></div></div>
-    <div class="vopt" id="vopt-unlisted" onclick="setVis('unlisted')"><div style="font-size:1.2rem"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1'/><path d='M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1'/></svg></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="unlisted">限定公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="unlistedDesc">URLを知っている人だけ</div></div></div>
-    <div class="vopt" id="vopt-public" onclick="setVis('public')"><div style="font-size:1.2rem"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><circle cx='12' cy='12' r='10'/><path d='M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20'/></svg></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="public">公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="publicDesc">ライブラリに掲載される</div></div></div>
+    <div style="font-size:.88rem;font-weight:700;margin-bottom:14px"><i class="ic" data-ic="globe"></i> <span data-i18n="publicSettings">公開設定</span></div>
+    <div class="vopt" id="vopt-private" onclick="setVis('private')"><div style="font-size:1.2rem"><i class="ic" data-ic="lock"></i></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="private">非公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="privateDesc">自分だけが見られます</div></div></div>
+    <div class="vopt" id="vopt-unlisted" onclick="setVis('unlisted')"><div style="font-size:1.2rem"><i class="ic" data-ic="link"></i></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="unlisted">限定公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="unlistedDesc">URLを知っている人だけ</div></div></div>
+    <div class="vopt" id="vopt-public" onclick="setVis('public')"><div style="font-size:1.2rem"><i class="ic" data-ic="globe"></i></div><div><div style="font-size:.86rem;font-weight:600" data-i18n="public">公開</div><div style="font-size:.7rem;color:var(--txs)" data-i18n="publicDesc">ライブラリに掲載される</div></div></div>
   </div>
 </div>
 
 <!-- Lang Name Modal -->
 <div id="lname-modal" class="modal-bg" onclick="if(event.target===this)closeLNE()">
   <div class="msheet" style="border-radius:16px;padding:24px;max-height:50vh">
-    <div style="font-size:.92rem;font-weight:700;margin-bottom:14px"><svg class='ico' width='1em' height='1em' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' style='display:inline-block;vertical-align:-.15em;flex-shrink:0'><path d='M11 4H4v16h16v-7M18 2l4 4-10 10h-4v-4L18 2z'/></svg> <span data-i18n="editLangName">言語名を変更</span></div>
+    <div style="font-size:.92rem;font-weight:700;margin-bottom:14px"><i class="ic" data-ic="edit"></i> <span data-i18n="editLangName">言語名を変更</span></div>
     <div class="field-block"><label class="fl" data-i18n="conlangName">言語名（コンラング名）</label><input type="text" class="inp" id="lname-inp" placeholder="例：シルヴァリ語" maxlength="40"></div>
     <div class="field-block"><label class="fl" data-i18n="nativeName">自然言語名（任意）</label><input type="text" class="inp" id="lnative-inp" placeholder="例：Silvari" maxlength="40"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
