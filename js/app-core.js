@@ -42,7 +42,7 @@ function updateDailySent(){
                (S.corpus?.length>0)?(S.corpus[S.corpus.length-1]?.cl||S.corpus[S.corpus.length-1]?.conlang||null):null;
   const shareBtn=document.getElementById('viola-share-btn');
   if(latest&&latest.trim()){
-    ds.innerHTML=glyphText(latest);ds.style.color='var(--tx)';
+    ds.textContent=latest;ds.style.color='var(--tx)';
     if(shareBtn)shareBtn.style.display='inline-flex';
   }else{
     ds.textContent=t('sceneHint')||'今日のシーンをコンラングで表現してみよう';ds.style.color='var(--txm)';
@@ -112,12 +112,9 @@ const IPA_V=[{g:'前舌',s:['i','e','ɛ','æ','a','y','ø','œ']},{g:'中舌',s:
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded',()=>{
   try{const sl=localStorage.getItem('lingua_lang');if(sl)_lang=sl;}catch(e){}
-  try{const gv=localStorage.getItem('lingua_glyphview');if(gv!==null)_glyphView=gv==='1';}catch(e){}
   const bar=document.getElementById('load-bar');
   if(bar){bar.style.width='40%';setTimeout(()=>bar.style.width='80%',300);}
   loadState();
-  // Default ON when a script is registered and the user hasn't set a preference yet.
-  try{if(localStorage.getItem('lingua_glyphview')===null&&typeof hasGlyphs==='function'&&hasGlyphs())_glyphView=true;}catch(e){}
   try{const s=localStorage.getItem(AKEY);if(s)_au=JSON.parse(s);}catch(e){}
   const fbPoll=setInterval(()=>{
     if(window.FB?.onAuthStateChanged&&window.FB.auth){
@@ -142,7 +139,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(ap)ap.style.display='block';
       applyLang();renderLangPills();
       _updateUI();initMDB();renderFaq();renderLib();renderVocab();renderRoadmap();
-      if(typeof updateGlyphToggle==='function')updateGlyphToggle();
+      if(typeof initScript==='function')initScript();
       generateScene();
     },300);
   },800);
@@ -151,12 +148,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ---- State ----
 function saveState(){try{localStorage.setItem(SKEY,JSON.stringify(S));}catch(e){}}
 function loadState(){try{const r=localStorage.getItem(SKEY);if(!r)return;const p=JSON.parse(r);Object.keys(DS).forEach(k=>{if(k in p)S[k]=p[k];});}catch(e){}}
-function schSave(){clearTimeout(_dsTimer);_dsTimer=setTimeout(()=>{saveState();showAS(t('autoSaved'));if(_au?.uid&&_isPro)schFSSave();renderRoadmap();if(typeof updateGlyphToggle==='function')updateGlyphToggle();},700);}
+function schSave(){clearTimeout(_dsTimer);_dsTimer=setTimeout(()=>{saveState();showAS(t('autoSaved'));if(_au?.uid&&_isPro)schFSSave();renderRoadmap();if(typeof scriptTick==='function')scriptTick();},700);}
 function showAS(m){const e=document.getElementById('autosave-el');if(!e)return;e.innerHTML=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
 let _fsT=null;
 function schFSSave(){clearTimeout(_fsT);_fsT=setTimeout(()=>saveFSState(),2000);}
 async function saveFSState(){if(!_au?.uid||!window.FB)return;try{await window.FB.setDoc(window.FB.doc(window.FB.db,'users',_au.uid),{linguaState:JSON.stringify(S),updatedAt:new Date().toISOString()},{merge:true});}catch(e){}}
-async function loadFSState(uid){if(!window.FB)return;try{const sn=await window.FB.getDoc(window.FB.doc(window.FB.db,'users',uid));if(sn.exists()&&sn.data().linguaState){const r=JSON.parse(sn.data().linguaState);Object.keys(DS).forEach(k=>{if(k in r)S[k]=r[k];});_updateUI();renderRoadmap();showAS(t('cloudRestored'));}}catch(e){}}
+async function loadFSState(uid){if(!window.FB)return;try{const sn=await window.FB.getDoc(window.FB.doc(window.FB.db,'users',uid));if(sn.exists()&&sn.data().linguaState){const r=JSON.parse(sn.data().linguaState);Object.keys(DS).forEach(k=>{if(k in r)S[k]=r[k];});_updateUI();renderRoadmap();showAS(t('cloudRestored'));if(typeof initScript==='function')initScript();}}catch(e){}}
 
 // ---- Util ----
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

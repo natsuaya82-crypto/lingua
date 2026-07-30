@@ -129,7 +129,7 @@ function goBack(){
 function setBN(id){document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));const e=document.getElementById(id);if(e)e.classList.add('active');}
 
 // ---- Update UI ----
-function _updateUI(){updateDash();updateAuthUI();updateVisUI();if(typeof updateGlyphToggle==='function')updateGlyphToggle();}
+function _updateUI(){updateDash();updateAuthUI();updateVisUI();if(typeof scriptTick==='function')scriptTick();}
 function updateDash(){
   const words=S.dictionary?.length||0,phos=(S.phoneme?.consonants?.length||0)+(S.phoneme?.vowels?.length||0),corp=S.corpus?.length||0;
   const lname=document.getElementById('d-lname');if(lname)lname.textContent=S.langName||t('newLang');
@@ -271,6 +271,8 @@ function openEditor(type){
   bd.innerHTML=buildEB(type);
   ov.classList.add('open');
   window.scrollTo(0,0);
+  // Writing-system letter grid needs its tile canvases painted after layout exists.
+  if(type==='script'&&typeof wMount==='function')requestAnimationFrame(wMount);
 }
 function closeEditor(){
   const ov=document.getElementById('ed-ov');
@@ -282,7 +284,7 @@ function closeEditor(){
   _updateUI();renderVocab();
   window.scrollTo(0,0);
 }
-function buildEB(type){switch(type){case 'phoneme':return buildPhEd();case 'vocab':return buildVcEd();case 'grammar':return buildGrEd();case 'corpus':return buildCpEd();case 'daily':return buildDlEd();case 'script':return buildScEd();case 'vibe':return buildVbEd();default:return '<p style="color:var(--txs)">'+t('comingSoon')+'</p>';}}
+function buildEB(type){switch(type){case 'phoneme':return buildPhEd();case 'vocab':return buildVcEd();case 'grammar':return buildGrEd();case 'corpus':return buildCpEd();case 'daily':return buildDlEd();case 'script':return wGridHTML();case 'vibe':return buildVbEd();default:return '<p style="color:var(--txs)">'+t('comingSoon')+'</p>';}}
 
 // ---- Tabs ----
 function swTab(btn,pid){const par=btn.closest('.eo')||document.getElementById('ed-body');if(!par)return;par.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));par.querySelectorAll('.tabpn').forEach(p=>p.classList.remove('active'));btn.classList.add('active');const p=document.getElementById(pid);if(p)p.classList.add('active');}
@@ -461,13 +463,11 @@ async function submitContact(){
 
 // ---- Global Exports ----
 window.goTo=goTo;window.goBack=goBack;window.openEditor=openEditor;window.closeEditor=closeEditor;window.openLogin=openLogin;window.closeLogin=closeLogin;
-window.openSvgEditor=openSvgEditor;window.closeSvgEditor=closeSvgEditor;window.saveSvgEditor=saveSvgEditor;window.clearSvgEditor=clearSvgEditor;window.uploadSvgFile=uploadSvgFile;window.renderSvgPreview=renderSvgPreview;
 
 // ---- Modal ESC to close ----
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
   // Close topmost open modal/overlay in stacking order
-  const edSvg=document.getElementById('svg-ed-modal');if(edSvg&&edSvg.classList.contains('open')){closeSvgEditor();return;}
   const vp=document.getElementById('vis-pop');if(vp&&vp.classList.contains('open')){closeVisPop();return;}
   const lg=document.getElementById('login-modal');if(lg&&lg.classList.contains('open')){closeLogin();return;}
   const lp=document.getElementById('lang-picker-modal');if(lp&&lp.classList.contains('open')){closeLangPicker();return;}

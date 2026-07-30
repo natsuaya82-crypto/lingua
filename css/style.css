@@ -637,3 +637,30 @@ textarea.inp{line-height:1.7}
 @media(min-width:1500px){
   .dash-main .mg{grid-template-columns:repeat(3,1fr)}
 }
+
+/* ===== WRITING SYSTEM (draw letters -> on-device font) ===== */
+.note{font-size:.74rem;color:var(--txs);line-height:1.6}
+.gtiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
+.gtile{position:relative;aspect-ratio:1/1;background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:0;display:flex;align-items:center;justify-content:center;color:var(--tx);cursor:pointer;font-size:1.2rem}
+.gtile.empty{background:none;border-style:dashed;color:var(--txm)}
+.gtile:active{opacity:.6}
+.gtile canvas{width:100%;height:100%;display:block;border-radius:12px}
+.gtile .rl{position:absolute;left:7px;bottom:4px;font-family:'Crimson Pro',Georgia,serif;font-style:italic;font-size:.76rem;color:var(--ac);opacity:.85;line-height:1}
+.gtile.add{font-size:1.4rem;color:var(--ac);border-style:dashed}
+.gcanvwrap{margin:6px 0 2px;display:flex;justify-content:center}
+.gcanv{width:100%;max-width:340px;aspect-ratio:1/1;touch-action:none;background:var(--sf2);border:1px solid var(--br);border-radius:16px;display:block;cursor:crosshair}
+.gtools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.gtools button{background:var(--sf2);border:1px solid var(--br);color:var(--txs);border-radius:20px;padding:8px 14px;font-size:.82rem;font-family:inherit;cursor:pointer}
+.gtools button.on{background:var(--acd);border-color:var(--acb);color:var(--ac);font-weight:600}
+.gtools button:disabled{opacity:.32;cursor:not-allowed}
+.gtools button:active{opacity:.6}
+.spv{background:var(--sf2);border:1px solid var(--br);border-radius:16px;padding:18px 20px;text-align:center;margin-bottom:4px}
+.spv .big{font-size:2.4rem;line-height:1.5;word-break:break-word;color:var(--tx)}
+.spv .sm{font-size:17px;line-height:1.9;margin-top:6px;color:var(--txs);word-break:break-word}
+.spv .rom{font-family:'Cinzel',Georgia,serif;font-size:.74rem;color:var(--txm);letter-spacing:.06em;margin-top:10px}
+.sfont{font-family:'LinguaScript',serif}
+html[data-script="on"] .wm,
+html[data-script="on"] .ccl,
+html[data-script="on"] #d-sent,
+html[data-script="on"] #d-lname,
+html[data-script="on"] .sfont{font-family:'LinguaScript',serif !important;letter-spacing:0}
